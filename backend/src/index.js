@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const cors = require('cors');
 const express = require('express');
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const { randomUUID } = require('crypto');
 const { loadPaymentConfig, normalizeConfirmations } = require('./payment/config');
 const { MoneroClient } = require('./payment/moneroClient');
@@ -21,12 +21,23 @@ const mongoDbName = process.env.MONGODB_DB || new URL(mongoUri).pathname.replace
 const callbackUrl = process.env.PAYMENT_STATUS_CALLBACK_URL || '';
 
 let payments;
+let skills;
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'myzubster-backend', storage: 'mongodb' });
+});
+
+app.get('/api/skills/:skillId', async (req, res) => {
+  try {
+    const skill = await findSkillById(req.params.skillId);
+    if (!skill) return res.status(404).json({ error: 'skill not found' });
+    res.json(publicSkill(skill));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.post('/api/payment/create', async (req, res) => {
@@ -156,6 +167,37 @@ app.post('/api/payment/webhook', async (req, res) => {
   }
 });
 
+async function findSkillById(skillId) {
+  const selectors = [{ id: skillId }, { skillId }];
+  if (ObjectId.isValid(skillId)) selectors.push({ _id: new ObjectId(skillId) });
+  return skills.findOne({ $or: selectors });
+}
+
+function publicSkill(skill) {
+  const user = skill.user || {
+    id: skill.sellerId || skill.userId || '',
+    name: skill.sellerName || skill.userName || 'Utente MyZubster',
+    avatarUrl: skill.avatarUrl || null
+  };
+
+  return {
+    id: String(skill.id || skill.skillId || skill._id),
+    title: skill.title || skill.name || 'Competenza',
+    category: skill.category || 'Generale',
+    type: skill.type || 'Offerta',
+    description: skill.description || '',
+    priceXmr: skill.priceXmr ?? skill.price ?? null,
+    distanceKm: skill.distanceKm ?? skill.distance ?? null,
+    address: skill.address || null,
+    sellerId: skill.sellerId || user.id,
+    user: {
+      id: user.id || skill.sellerId || '',
+      name: user.name || 'Utente MyZubster',
+      avatarUrl: user.avatarUrl || null
+    }
+  };
+}
+
 function publicPayment(payment) {
   return {
     paymentId: payment.paymentId,
@@ -229,9 +271,11 @@ async function start() {
   await mongo.connect();
   const db = mongo.db(mongoDbName);
   payments = db.collection('monero_payments');
+  skills = db.collection('skills');
   await payments.createIndex({ paymentId: 1 }, { unique: true });
   await payments.createIndex({ address: 1 }, { unique: true });
   await payments.createIndex({ sellerId: 1, createdAt: -1 });
+  await skills.createIndex({ id: 1 });
 
   app.listen(port, () => {
     console.log(`MyZubster backend listening on http://0.0.0.0:${port}`);

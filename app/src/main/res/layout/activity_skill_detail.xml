@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/skillDetailTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Titolo competenza"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/skillDetailCategoryBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#FFE0B2"
+                android:paddingLeft="12dp"
+                android:paddingTop="6dp"
+                android:paddingRight="12dp"
+                android:paddingBottom="6dp"
+                android:text="Categoria"
+                android:textColor="#E65100"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/skillDetailTypeBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:background="#BBDEFB"
+                android:paddingLeft="12dp"
+                android:paddingTop="6dp"
+                android:paddingRight="12dp"
+                android:paddingBottom="6dp"
+                android:text="Tipo"
+                android:textColor="#0D47A1"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/skillDetailDescriptionText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Descrizione della competenza"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/skillDetailPriceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Prezzo: non indicato"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/skillDetailDistanceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Distanza: --"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/skillDetailAddressText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Indirizzo: --"
+            android:textSize="15sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/skillDetailAvatarText"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="#DDDDDD"
+                android:gravity="center"
+                android:text="👤"
+                android:textSize="28sp" />
+
+            <TextView
+                android:id="@+id/skillDetailUserNameText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="12dp"
+                android:layout_weight="1"
+                android:text="Nome utente"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/skillDetailProgress"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/skillDetailErrorText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:textColor="#B00020"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/contactSellerButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:enabled="false"
+            android:text="Contatta" />
+    </LinearLayout>
+</ScrollView>
