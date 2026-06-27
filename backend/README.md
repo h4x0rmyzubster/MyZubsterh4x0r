@@ -1,13 +1,13 @@
 # Backend di MyZubster
 
-Server Node.js/Express per le API MyZubster, incluso un gateway Monero self-hosted ispirato a Monero Merchant/MoneroPay. L'entrypoint predefinito `src/index.js` salva le richieste di pagamento in MongoDB.
+Server Node.js/Express per le API MyZubster, incluso un gateway Monero self-hosted ispirato a Monero Merchant/MoneroPay. L'entrypoint predefinito `src/index.js` salva le richieste di pagamento in MongoDB e usa un provider Monero reale (`monero-wallet-rpc` oppure MoneroPay), non indirizzi simulati.
 
 ## Pagamenti Monero
 
 Endpoint REST disponibili:
 
-- `POST /api/payment/create` — riceve `amount`, `description`, `sellerId`, crea un `paymentId`, genera un indirizzo one-shot e salva in MongoDB.
-- `GET /api/payment/status/:paymentId` — verifica importo ricevuto/conferme sulla blockchain Monero e aggiorna MongoDB.
+- `POST /api/payment/create` — riceve `amount`/`amountXmr`, `description`, `sellerId`, crea un `paymentId`, chiama `createPaymentTransaction(amount, sellerId)` per generare un indirizzo one-shot e salva una transazione `pending` in MongoDB.
+- `GET /api/payment/status/:paymentId` — chiama `checkPaymentStatus(paymentId)`, verifica importo ricevuto/conferme sulla blockchain Monero e aggiorna MongoDB (`pending`, `detected`, `confirmed`, `failed`).
 - `POST /api/payment/webhook` — riceve conferme da MoneroPay/worker, aggiorna MongoDB e invia una callback opzionale all'app.
 
 Il client Android riceve solo `address`, `amountXmr`, `uri` e stato: nessuna chiave privata viene inviata al dispositivo.
@@ -23,6 +23,7 @@ Copia `.env.example` in `.env` e imposta almeno una modalità:
 2. **Fallback: monero-wallet-rpc**
    - lascia vuoto `MONEROPAY_URL`
    - `MONERO_WALLET_RPC_URL=http://127.0.0.1:18083/json_rpc`
+   - per la stagenet locale configurata in OpenClaw: `MONERO_WALLET_RPC_URL=http://127.0.0.1:38082/json_rpc`
    - `MONERO_NODE_URL=http://127.0.0.1:18081/json_rpc`
 
 Variabili supportate:

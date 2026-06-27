@@ -6,14 +6,17 @@ const mongoose = require('mongoose');
 const { randomUUID, createHash } = require('crypto');
 const PaymentTransaction = require('./models/PaymentTransaction');
 const { sendPaymentConfirmedNotification } = require('./notifications/firebase');
-const { parseXmrToAtomic, buildMoneroUri } = require('./payment/paymentService');
+const { loadPaymentConfig, normalizeConfirmations } = require('./payment/config');
+const { MoneroClient } = require('./payment/moneroClient');
+const { parseXmrToAtomic, formatAtomicToXmr, buildMoneroUri } = require('./payment/paymentService');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/myzubster';
 const callbackUrl = process.env.PAYMENT_STATUS_CALLBACK_URL || '';
-const simulationDelayMs = Number(process.env.MONERO_PAYMENT_SIMULATION_MS || 10_000);
 const platformFeeRate = Number(process.env.PAYMENT_PLATFORM_FEE_RATE || 0.02);
+const paymentConfig = loadPaymentConfig(process.env);
+const moneroClient = new MoneroClient(paymentConfig);
 
 let skills;
 
@@ -21,7 +24,12 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'myzubster-backend', storage: 'mongoose', moneroMode: 'simulated' });
+  res.json({
+    ok: true,
+    service: 'myzubster-backend',
+    storage: 'mongoose',
+    moneroMode: paymentConfig.provider
+  });
 });
 
 app.get('/api/skills/:skillId', async (req, res) => {
@@ -36,36 +44,9 @@ app.get('/api/skills/:skillId', async (req, res) => {
 
 app.post('/api/payment/create', async (req, res) => {
   try {
-    const { amount, amountXmr, description, sellerId, buyerId, fcmToken, callbackUrl: requestCallbackUrl } = req.body || {};
-    if (!sellerId || typeof sellerId !== 'string') {
-      return res.status(400).json({ error: 'sellerId is required' });
-    }
-
-    const amountValue = normalizeAmount(amountXmr ?? amount);
-    const paymentId = randomUUID();
-    const moneroAddress = generateOneTimeMoneroAddress(paymentId);
-    const feeAmount = roundXmr(amountValue * platformFeeRate);
-    const netAmount = roundXmr(amountValue - feeAmount);
-
-    const transaction = await PaymentTransaction.create({
-      paymentId,
-      amount: amountValue,
-      feeAmount,
-      netAmount,
-      sellerId: toObjectId(sellerId),
-      buyerId: buyerId && mongoose.Types.ObjectId.isValid(buyerId) ? new mongoose.Types.ObjectId(buyerId) : null,
-      status: 'in_attesa',
-      moneroAddress,
-      fcmToken: fcmToken || null,
-      description: description || 'MyZubster payment',
-      confirmations: 0,
-      createdAt: new Date(),
-      confirmedAt: null
-    });
-
-    schedulePaymentSimulation(transaction.paymentId, requestCallbackUrl || callbackUrl || null);
-
-    res.status(201).json(publicPayment(transaction, requestCallbackUrl || callbackUrl || null));
+    const { amount, amountXmr, sellerId, ...options } = req.body || {};
+    const transaction = await createPaymentTransaction(amountXmr ?? amount, sellerId, options);
+    res.status(201).json(publicPayment(transaction, options.callbackUrl || callbackUrl || null));
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -73,42 +54,49 @@ app.post('/api/payment/create', async (req, res) => {
 
 app.get('/api/payment/status/:paymentId', async (req, res) => {
   try {
-    const transaction = await confirmDueSimulatedPayment(req.params.paymentId);
+    const transaction = await checkPaymentStatus(req.params.paymentId, {
+      callbackUrl: req.query.callbackUrl || callbackUrl || null
+    });
     if (!transaction) return res.status(404).json({ error: 'payment not found' });
 
-    res.json({
-      ...publicPayment(transaction),
-      status: toApiStatus(transaction.status),
-      amount: transaction.amount,
-      confirmations: transaction.confirmations
-    });
+    res.json(publicPayment(transaction));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(502).json({ error: error.message });
   }
 });
 
 app.post('/api/payment/webhook', async (req, res) => {
   try {
-    const { paymentId, status, confirmations, txIds } = req.body || {};
+    const { paymentId, status, confirmations, txIds, txids, paidAtomic, amountAtomic } = req.body || {};
     if (!paymentId) return res.status(400).json({ error: 'paymentId is required' });
 
-    const nextStatus = status ? toDbStatus(status) : 'confermato';
+    const previous = await PaymentTransaction.findOne({ paymentId });
+    if (!previous) return res.status(404).json({ error: 'payment not found' });
+
+    const nextStatus = status ? toDbStatus(status) : 'confirmed';
+    const paidAtomicValue = paidAtomic ?? amountAtomic ?? previous.paidAtomic ?? previous.amountAtomic;
     const update = {
       status: nextStatus,
-      confirmations: Number(confirmations ?? (nextStatus === 'confermato' ? 10 : 0))
+      confirmations: Number(confirmations ?? (nextStatus === 'confirmed' ? previous.requiredConfirmations : previous.confirmations ?? 0)),
+      paidAtomic: String(paidAtomicValue),
+      paidXmr: formatAtomicToXmr(BigInt(String(paidAtomicValue))),
+      txIds: txIds || txids || previous.txIds || [],
+      updatedAt: new Date()
     };
-    if (nextStatus === 'confermato') update.confirmedAt = new Date();
+    if (nextStatus === 'confirmed') update.confirmedAt = previous.confirmedAt || new Date();
 
     const transaction = await PaymentTransaction.findOneAndUpdate(
       { paymentId },
       { $set: update },
       { new: true }
     );
-    if (!transaction) return res.status(404).json({ error: 'payment not found' });
 
-    notifyPaymentConfirmed(transaction, req.body.callbackUrl || callbackUrl || null, txIds || []).catch((error) => {
-      console.warn(`Payment notification failed for ${paymentId}: ${error.message}`);
-    });
+    const transitionedToConfirmed = !isConfirmedStatus(previous.status) && isConfirmedStatus(transaction.status);
+    if (transitionedToConfirmed) {
+      notifyPaymentConfirmed(transaction, req.body.callbackUrl || callbackUrl || null, transaction.txIds || []).catch((error) => {
+        console.warn(`Payment notification failed for ${paymentId}: ${error.message}`);
+      });
+    }
 
     res.json(publicPayment(transaction));
   } catch (error) {
@@ -116,46 +104,89 @@ app.post('/api/payment/webhook', async (req, res) => {
   }
 });
 
-async function confirmDueSimulatedPayment(paymentId) {
+async function createPaymentTransaction(amount, sellerId, options = {}) {
+  if (!sellerId || typeof sellerId !== 'string') {
+    throw new Error('sellerId is required');
+  }
+
+  const amountAtomic = parseXmrToAtomic(amount);
+  const amountValue = Number(formatAtomicToXmr(amountAtomic));
+  const feeAmount = roundXmr(amountValue * platformFeeRate);
+  const netAmount = roundXmr(amountValue - feeAmount);
+  const paymentId = randomUUID();
+  const description = options.description || 'MyZubster payment';
+  const requiredConfirmations = normalizeConfirmations(options.confirmations ?? paymentConfig.defaultConfirmations);
+  const label = `myzubster:${paymentId}:seller:${sellerId}`;
+  const addressInfo = await moneroClient.createPaymentAddress({ label });
+
+  return PaymentTransaction.create({
+    paymentId,
+    amount: amountValue,
+    amountAtomic: amountAtomic.toString(),
+    feeAmount,
+    netAmount,
+    sellerId: toObjectId(sellerId),
+    buyerId: options.buyerId && mongoose.Types.ObjectId.isValid(options.buyerId) ? new mongoose.Types.ObjectId(options.buyerId) : null,
+    status: 'pending',
+    moneroAddress: addressInfo.address,
+    paidAtomic: '0',
+    paidXmr: '0',
+    requiredConfirmations,
+    confirmations: 0,
+    subaddressIndex: addressInfo.subaddressIndex ?? null,
+    externalId: addressInfo.externalId || null,
+    moneroProvider: paymentConfig.provider,
+    txIds: [],
+    fcmToken: options.fcmToken || null,
+    description,
+    createdAt: new Date(),
+    confirmedAt: null
+  });
+}
+
+async function checkPaymentStatus(paymentId, options = {}) {
   const transaction = await PaymentTransaction.findOne({ paymentId });
   if (!transaction) return null;
-  if (transaction.status !== 'in_attesa' && transaction.status !== 'pending') return transaction;
+  if (toApiStatus(transaction.status) === 'failed') return transaction;
 
-  const elapsedMs = Date.now() - new Date(transaction.createdAt).getTime();
-  if (elapsedMs < simulationDelayMs) return transaction;
+  const amountAtomic = transaction.amountAtomic || parseXmrToAtomic(transaction.amount).toString();
+  if (!transaction.amountAtomic) transaction.amountAtomic = amountAtomic;
 
-  transaction.status = 'confermato';
-  transaction.confirmations = 10;
-  transaction.confirmedAt = transaction.confirmedAt || new Date();
+  const chainState = await moneroClient.checkPayment({
+    id: transaction.paymentId,
+    address: transaction.moneroAddress,
+    amountAtomic,
+    requiredConfirmations: transaction.requiredConfirmations,
+    subaddressIndex: transaction.subaddressIndex,
+    externalId: transaction.externalId
+  });
+
+  const paidAtomic = BigInt(String(chainState.paidAtomic || 0));
+  const requiredAmount = BigInt(amountAtomic);
+  const confirmations = Number(chainState.confirmations || 0);
+  const hasEnoughAmount = paidAtomic >= requiredAmount;
+  const hasEnoughConfirmations = confirmations >= Number(transaction.requiredConfirmations || 0);
+  const nextStatus = hasEnoughAmount && hasEnoughConfirmations
+    ? 'confirmed'
+    : hasEnoughAmount
+      ? 'detected'
+      : 'pending';
+  const transitionedToConfirmed = !isConfirmedStatus(transaction.status) && isConfirmedStatus(nextStatus);
+
+  transaction.status = nextStatus;
+  transaction.paidAtomic = paidAtomic.toString();
+  transaction.paidXmr = formatAtomicToXmr(paidAtomic);
+  transaction.confirmations = confirmations;
+  transaction.txIds = chainState.txIds || [];
+  transaction.updatedAt = new Date();
+  if (nextStatus === 'confirmed') transaction.confirmedAt = transaction.confirmedAt || new Date();
   await transaction.save();
-  await notifyPaymentConfirmed(transaction, null, []);
+
+  if (transitionedToConfirmed) {
+    await notifyPaymentConfirmed(transaction, options.callbackUrl || null, transaction.txIds || []);
+  }
+
   return transaction;
-}
-
-function schedulePaymentSimulation(paymentId, paymentCallbackUrl) {
-  setTimeout(async () => {
-    try {
-      const transaction = await PaymentTransaction.findOneAndUpdate(
-        { paymentId, status: { $in: ['in_attesa', 'pending'] } },
-        { $set: { status: 'confermato', confirmations: 10, confirmedAt: new Date() } },
-        { new: true }
-      );
-      if (transaction) await notifyPaymentConfirmed(transaction, paymentCallbackUrl, []);
-    } catch (error) {
-      console.warn(`Simulated payment confirmation failed for ${paymentId}: ${error.message}`);
-    }
-  }, simulationDelayMs);
-}
-
-function normalizeAmount(value) {
-  const atomic = parseXmrToAtomic(value);
-  return Number(valueFromAtomic(atomic));
-}
-
-function valueFromAtomic(atomic) {
-  const whole = atomic / 1_000_000_000_000n;
-  const fraction = (atomic % 1_000_000_000_000n).toString().padStart(12, '0').replace(/0+$/, '');
-  return fraction ? `${whole}.${fraction}` : whole.toString();
 }
 
 function roundXmr(value) {
@@ -166,12 +197,6 @@ function toObjectId(value) {
   if (mongoose.Types.ObjectId.isValid(value)) return new mongoose.Types.ObjectId(value);
   // Prototype-friendly fallback for demo seller IDs such as "seller-demo" while the real users collection is not wired yet.
   return new mongoose.Types.ObjectId(createHash('sha1').update(String(value)).digest('hex').slice(0, 24));
-}
-
-function generateOneTimeMoneroAddress(paymentId) {
-  const digest = createHash('sha256').update(`myzubster:${paymentId}`).digest('hex');
-  // Simulation-only address with a Monero-like shape. No private keys are generated or exposed to clients.
-  return `8MyZubster${digest}${digest}`.slice(0, 95);
 }
 
 async function findSkillById(skillId) {
@@ -206,7 +231,8 @@ function publicSkill(skill) {
 }
 
 function publicPayment(transaction, paymentCallbackUrl = null) {
-  const amountAtomic = parseXmrToAtomic(transaction.amount);
+  const amountAtomic = BigInt(transaction.amountAtomic || parseXmrToAtomic(transaction.amount).toString());
+  const paidAtomic = BigInt(String(transaction.paidAtomic || 0));
   const status = toApiStatus(transaction.status);
   const address = transaction.moneroAddress;
   return {
@@ -214,7 +240,7 @@ function publicPayment(transaction, paymentCallbackUrl = null) {
     address,
     moneroAddress: address,
     amount: transaction.amount,
-    amountXmr: valueFromAtomic(amountAtomic),
+    amountXmr: formatAtomicToXmr(amountAtomic),
     amountAtomic: amountAtomic.toString(),
     feeAmount: transaction.feeAmount,
     netAmount: transaction.netAmount,
@@ -222,33 +248,42 @@ function publicPayment(transaction, paymentCallbackUrl = null) {
     description: transaction.description,
     sellerId: String(transaction.sellerId),
     buyerId: transaction.buyerId ? String(transaction.buyerId) : null,
-    requiredConfirmations: 10,
+    requiredConfirmations: transaction.requiredConfirmations || 0,
     status,
     rawStatus: transaction.status,
-    paidXmr: status === 'confirmed' ? valueFromAtomic(amountAtomic) : '0',
-    paidAtomic: status === 'confirmed' ? amountAtomic.toString() : '0',
+    paidXmr: formatAtomicToXmr(paidAtomic),
+    paidAtomic: paidAtomic.toString(),
     confirmations: transaction.confirmations || 0,
-    txIds: [],
+    txIds: transaction.txIds || [],
+    subaddressIndex: transaction.subaddressIndex ?? null,
+    externalId: transaction.externalId || null,
+    moneroProvider: transaction.moneroProvider || paymentConfig.provider,
     uri: buildMoneroUri(address, amountAtomic, transaction.description || 'MyZubster payment'),
     callbackUrl: paymentCallbackUrl,
     fcmToken: transaction.fcmToken ? 'configured' : null,
     createdAt: transaction.createdAt,
     confirmedAt: transaction.confirmedAt,
-    updatedAt: transaction.confirmedAt || transaction.createdAt
+    updatedAt: transaction.updatedAt || transaction.confirmedAt || transaction.createdAt
   };
 }
 
 function toApiStatus(status) {
   if (status === 'confermato' || status === 'confirmed') return 'confirmed';
+  if (status === 'detected') return 'detected';
   if (status === 'fallito' || status === 'failed') return 'failed';
   return 'pending';
 }
 
 function toDbStatus(status) {
   const normalized = String(status).toLowerCase();
-  if (normalized === 'confirmed' || normalized === 'confermato') return 'confermato';
-  if (normalized === 'failed' || normalized === 'fallito') return 'fallito';
-  return 'in_attesa';
+  if (normalized === 'confirmed' || normalized === 'confermato') return 'confirmed';
+  if (normalized === 'detected') return 'detected';
+  if (normalized === 'failed' || normalized === 'fallito') return 'failed';
+  return 'pending';
+}
+
+function isConfirmedStatus(status) {
+  return toApiStatus(status) === 'confirmed';
 }
 
 async function notifyPaymentConfirmed(transaction, paymentCallbackUrl, txIds = []) {
@@ -284,6 +319,7 @@ async function notifyApp(transaction, paymentCallbackUrl, txIds = []) {
       buyerId: transaction.buyerId ? String(transaction.buyerId) : null,
       status: toApiStatus(transaction.status),
       amount: transaction.amount,
+      amountXmr: formatAtomicToXmr(BigInt(transaction.amountAtomic)),
       feeAmount: transaction.feeAmount,
       netAmount: transaction.netAmount,
       confirmations: transaction.confirmations,
@@ -301,11 +337,19 @@ async function start() {
   app.listen(port, () => {
     console.log(`MyZubster backend listening on http://0.0.0.0:${port}`);
     console.log(`MongoDB database: ${mongoose.connection.name}`);
-    console.log(`Monero mode: simulated confirmations after ${simulationDelayMs}ms`);
+    console.log(`Monero provider: ${paymentConfig.provider}`);
   });
 }
 
-start().catch((error) => {
-  console.error('Failed to start MyZubster backend', error);
-  process.exit(1);
-});
+if (require.main === module) {
+  start().catch((error) => {
+    console.error('Failed to start MyZubster backend', error);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  app,
+  createPaymentTransaction,
+  checkPaymentStatus
+};

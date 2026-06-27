@@ -96,18 +96,18 @@ class MoneroClient {
   }
 
   async checkWalletRpcPayment(payment) {
-    const response = await this.walletRpc('get_transfers', {
+    const params = {
       in: true,
       pending: true,
-      pool: true,
       account_index: this.config.accountIndex,
       subaddr_indices: payment.subaddressIndex === null || payment.subaddressIndex === undefined ? [] : [Number(payment.subaddressIndex)]
-    });
+    };
+
+    const response = await this.walletRpc('get_transfers', params);
 
     const transfers = [
       ...(response.in || []),
-      ...(response.pending || []),
-      ...(response.pool || [])
+      ...(response.pending || [])
     ].filter((tx) => {
       if (payment.subaddressIndex === null || payment.subaddressIndex === undefined) return true;
       const minor = tx.subaddr_index?.minor ?? tx.subaddr_indices?.[0]?.minor;

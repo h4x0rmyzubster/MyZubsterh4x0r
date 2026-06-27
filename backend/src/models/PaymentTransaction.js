@@ -39,13 +39,48 @@ const paymentTransactionSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ['in_attesa', 'confermato', 'fallito', 'pending', 'confirmed', 'failed'],
-    default: 'in_attesa',
+    enum: ['in_attesa', 'confermato', 'fallito', 'pending', 'detected', 'confirmed', 'failed'],
+    default: 'pending',
     index: true
   },
   moneroAddress: {
     type: String,
     required: true
+  },
+  amountAtomic: {
+    type: String,
+    required: true
+  },
+  paidAtomic: {
+    type: String,
+    default: '0'
+  },
+  paidXmr: {
+    type: String,
+    default: '0'
+  },
+  requiredConfirmations: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  subaddressIndex: {
+    type: Number,
+    default: null
+  },
+  externalId: {
+    type: String,
+    default: null,
+    index: true
+  },
+  moneroProvider: {
+    type: String,
+    enum: ['wallet-rpc', 'moneropay'],
+    default: 'wallet-rpc'
+  },
+  txIds: {
+    type: [String],
+    default: []
   },
   fcmToken: {
     type: String,
@@ -68,6 +103,10 @@ const paymentTransactionSchema = new Schema({
     type: Date,
     default: Date.now
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
   confirmedAt: {
     type: Date,
     default: null
@@ -78,5 +117,7 @@ const paymentTransactionSchema = new Schema({
 
 paymentTransactionSchema.index({ sellerId: 1, createdAt: -1 });
 paymentTransactionSchema.index({ buyerId: 1, createdAt: -1 });
+paymentTransactionSchema.index({ moneroAddress: 1 }, { unique: true });
+paymentTransactionSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.models.PaymentTransaction || mongoose.model('PaymentTransaction', paymentTransactionSchema);
