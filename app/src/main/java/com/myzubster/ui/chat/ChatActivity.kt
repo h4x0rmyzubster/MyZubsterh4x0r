@@ -27,6 +27,12 @@ class ChatActivity : AppCompatActivity() {
             putExtra(PaymentActivity.EXTRA_DESCRIPTION, description)
         }
         startActivity(intent)
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+    }
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
     companion object {

@@ -22,6 +22,7 @@ class SkillDetailActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_skill_detail)
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
 
         val skillId = intent.getStringExtra(EXTRA_SKILL_ID)
         if (skillId.isNullOrBlank()) {
@@ -82,6 +83,7 @@ class SkillDetailActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean) {
         findViewById<ProgressBar>(R.id.skillDetailProgress).visibility = if (loading) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.contactSellerButton).isEnabled = !loading && !publisherUserId.isNullOrBlank()
     }
 
     private fun showError(message: String) {
@@ -99,6 +101,11 @@ class SkillDetailActivity : AppCompatActivity() {
     private fun formatXmr(value: Double): String = String.format(Locale.US, "%.12f", value)
         .trimEnd('0')
         .trimEnd('.')
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
 
     companion object {
         const val EXTRA_SKILL_ID = "extra_skill_id"

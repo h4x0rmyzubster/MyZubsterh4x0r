@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
 import java.math.BigDecimal
 
 class PaymentActivity : AppCompatActivity() {
@@ -33,6 +34,7 @@ class PaymentActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_payment)
+        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
 
         val existingPaymentId = intent.getStringExtra(EXTRA_PAYMENT_ID)
         val amount = intent.getDoubleExtra(EXTRA_AMOUNT, 0.01)
@@ -143,8 +145,8 @@ class PaymentActivity : AppCompatActivity() {
 
     private suspend fun awaitFcmToken(): String? = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
         FirebaseMessaging.getInstance().token
-            .addOnSuccessListener { token -> continuation.resume(token, null) }
-            .addOnFailureListener { continuation.resume(null, null) }
+            .addOnSuccessListener { token -> continuation.resume(token) }
+            .addOnFailureListener { continuation.resume(null) }
     }
 
     private fun showSuccessDialog() {
@@ -159,6 +161,8 @@ class PaymentActivity : AppCompatActivity() {
 
     private fun setLoading(loading: Boolean) {
         findViewById<ProgressBar>(R.id.paymentActivityProgress).visibility = if (loading) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.paymentActivityCancelButton).isEnabled = true
+        findViewById<Button>(R.id.paymentActivityOpenWalletButton).alpha = if (loading) 0.6f else 1.0f
     }
 
     private fun setStatus(message: String) {
@@ -168,6 +172,11 @@ class PaymentActivity : AppCompatActivity() {
     private fun formatAmount(amount: Double): String = BigDecimal.valueOf(amount)
         .stripTrailingZeros()
         .toPlainString()
+
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
 
     companion object {
         const val EXTRA_AMOUNT = "extra_amount"
