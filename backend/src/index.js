@@ -5,6 +5,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { randomUUID, createHash } = require('crypto');
 const PaymentTransaction = require('./models/PaymentTransaction');
+const { sendPaymentConfirmedNotification } = require('./notifications/firebase');
 const { parseXmrToAtomic, buildMoneroUri } = require('./payment/paymentService');
 
 const app = express();
@@ -35,7 +36,7 @@ app.get('/api/skills/:skillId', async (req, res) => {
 
 app.post('/api/payment/create', async (req, res) => {
   try {
-    const { amount, amountXmr, description, sellerId, buyerId, callbackUrl: requestCallbackUrl } = req.body || {};
+    const { amount, amountXmr, description, sellerId, buyerId, fcmToken, callbackUrl: requestCallbackUrl } = req.body || {};
     if (!sellerId || typeof sellerId !== 'string') {
       return res.status(400).json({ error: 'sellerId is required' });
     }
@@ -55,6 +56,7 @@ app.post('/api/payment/create', async (req, res) => {
       buyerId: buyerId && mongoose.Types.ObjectId.isValid(buyerId) ? new mongoose.Types.ObjectId(buyerId) : null,
       status: 'in_attesa',
       moneroAddress,
+      fcmToken: fcmToken || null,
       description: description || 'MyZubster payment',
       confirmations: 0,
       createdAt: new Date(),
@@ -104,8 +106,8 @@ app.post('/api/payment/webhook', async (req, res) => {
     );
     if (!transaction) return res.status(404).json({ error: 'payment not found' });
 
-    notifyApp(transaction, req.body.callbackUrl || callbackUrl || null, txIds || []).catch((error) => {
-      console.warn(`Payment callback failed for ${paymentId}: ${error.message}`);
+    notifyPaymentConfirmed(transaction, req.body.callbackUrl || callbackUrl || null, txIds || []).catch((error) => {
+      console.warn(`Payment notification failed for ${paymentId}: ${error.message}`);
     });
 
     res.json(publicPayment(transaction));
@@ -126,6 +128,7 @@ async function confirmDueSimulatedPayment(paymentId) {
   transaction.confirmations = 10;
   transaction.confirmedAt = transaction.confirmedAt || new Date();
   await transaction.save();
+  await notifyPaymentConfirmed(transaction, null, []);
   return transaction;
 }
 
@@ -137,7 +140,7 @@ function schedulePaymentSimulation(paymentId, paymentCallbackUrl) {
         { $set: { status: 'confermato', confirmations: 10, confirmedAt: new Date() } },
         { new: true }
       );
-      if (transaction) await notifyApp(transaction, paymentCallbackUrl, []);
+      if (transaction) await notifyPaymentConfirmed(transaction, paymentCallbackUrl, []);
     } catch (error) {
       console.warn(`Simulated payment confirmation failed for ${paymentId}: ${error.message}`);
     }
@@ -228,6 +231,7 @@ function publicPayment(transaction, paymentCallbackUrl = null) {
     txIds: [],
     uri: buildMoneroUri(address, amountAtomic, transaction.description || 'MyZubster payment'),
     callbackUrl: paymentCallbackUrl,
+    fcmToken: transaction.fcmToken ? 'configured' : null,
     createdAt: transaction.createdAt,
     confirmedAt: transaction.confirmedAt,
     updatedAt: transaction.confirmedAt || transaction.createdAt
@@ -245,6 +249,28 @@ function toDbStatus(status) {
   if (normalized === 'confirmed' || normalized === 'confermato') return 'confermato';
   if (normalized === 'failed' || normalized === 'fallito') return 'fallito';
   return 'in_attesa';
+}
+
+async function notifyPaymentConfirmed(transaction, paymentCallbackUrl, txIds = []) {
+  await Promise.allSettled([
+    notifyApp(transaction, paymentCallbackUrl, txIds),
+    notifyPush(transaction)
+  ]);
+}
+
+async function notifyPush(transaction) {
+  if (transaction.notificationSentAt) return;
+  const result = await sendPaymentConfirmedNotification({
+    token: transaction.fcmToken,
+    payment: {
+      paymentId: transaction.paymentId,
+      amount: transaction.amount
+    }
+  });
+  if (result) {
+    transaction.notificationSentAt = new Date();
+    await transaction.save();
+  }
 }
 
 async function notifyApp(transaction, paymentCallbackUrl, txIds = []) {

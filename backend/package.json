@@ -8,12 +8,13 @@
   "scripts": {
     "start": "node src/index.js",
     "start:json-store": "node src/server.js",
-    "check": "node --check src/index.js && node --check src/server.js && node --check src/models/PaymentTransaction.js && node --check src/payment/config.js && node --check src/payment/moneroClient.js && node --check src/payment/paymentStore.js && node --check src/payment/paymentService.js && node --check src/payment/routes.js"
+    "check": "node --check src/index.js && node --check src/server.js && node --check src/models/PaymentTransaction.js && node --check src/notifications/firebase.js && node --check src/payment/config.js && node --check src/payment/moneroClient.js && node --check src/payment/paymentStore.js && node --check src/payment/paymentService.js && node --check src/payment/routes.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "firebase-admin": "^13.0.2",
     "mongodb": "^6.12.0",
     "mongoose": "^8.9.5",
     "uuid": "^11.0.5"

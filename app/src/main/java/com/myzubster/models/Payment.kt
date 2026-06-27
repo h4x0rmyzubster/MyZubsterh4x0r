@@ -5,6 +5,7 @@ data class PaymentCreateRequest(
     val description: String,
     val sellerId: String,
     val buyerId: String? = null,
+    val fcmToken: String? = null,
     val confirmations: Int = 10
 )
 

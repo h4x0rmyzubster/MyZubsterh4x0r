@@ -3,6 +3,12 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.lifecycle('google-services.json non trovato: Firebase plugin non applicato in questa build locale.')
+}
+
 android {
     namespace 'com.myzubster'
     compileSdk 35
@@ -29,6 +35,8 @@ dependencies {
     implementation 'androidx.fragment:fragment-ktx:1.8.4'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'com.google.android.material:material:1.12.0'
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging-ktx'
     implementation 'com.google.zxing:core:3.5.2'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'

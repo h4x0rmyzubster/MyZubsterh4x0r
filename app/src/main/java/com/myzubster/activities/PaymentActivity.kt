@@ -15,6 +15,7 @@ import com.myzubster.R
 import com.myzubster.models.Payment
 import com.myzubster.models.PaymentCreateRequest
 import com.myzubster.models.PaymentStatus
+import com.google.firebase.messaging.FirebaseMessaging
 import com.myzubster.network.PaymentApiService
 import com.myzubster.utils.QRCodeGenerator
 import kotlinx.coroutines.Job
@@ -33,6 +34,7 @@ class PaymentActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_payment)
 
+        val existingPaymentId = intent.getStringExtra(EXTRA_PAYMENT_ID)
         val amount = intent.getDoubleExtra(EXTRA_AMOUNT, 0.01)
         val sellerId = intent.getStringExtra(EXTRA_SELLER_ID) ?: "seller-demo"
         val description = intent.getStringExtra(EXTRA_DESCRIPTION) ?: "Pagamento MyZubster"
@@ -41,7 +43,13 @@ class PaymentActivity : AppCompatActivity() {
         findViewById<Button>(R.id.paymentActivityCancelButton).setOnClickListener { cancelPayment() }
         findViewById<Button>(R.id.paymentActivityOpenWalletButton).setOnClickListener { openWallet() }
 
-        createPayment(amount, description, sellerId)
+        if (existingPaymentId.isNullOrBlank()) {
+            createPayment(amount, description, sellerId)
+        } else {
+            setLoading(true)
+            setStatus("Carico stato pagamento...")
+            startStatusPolling(existingPaymentId)
+        }
     }
 
     override fun onDestroy() {
@@ -55,12 +63,14 @@ class PaymentActivity : AppCompatActivity() {
         setStatus("Creo richiesta di pagamento...")
 
         lifecycleScope.launch {
+            val fcmToken = runCatching { awaitFcmToken() }.getOrNull()
             runCatching {
                 paymentApiService.createPayment(
                     PaymentCreateRequest(
                         amount = amount,
                         description = description,
-                        sellerId = sellerId
+                        sellerId = sellerId,
+                        fcmToken = fcmToken
                     )
                 )
             }.onSuccess { payment ->
@@ -131,6 +141,12 @@ class PaymentActivity : AppCompatActivity() {
         finish()
     }
 
+    private suspend fun awaitFcmToken(): String? = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+        FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { token -> continuation.resume(token, null) }
+            .addOnFailureListener { continuation.resume(null, null) }
+    }
+
     private fun showSuccessDialog() {
         if (successDialogShown) return
         successDialogShown = true
@@ -157,6 +173,7 @@ class PaymentActivity : AppCompatActivity() {
         const val EXTRA_AMOUNT = "extra_amount"
         const val EXTRA_SELLER_ID = "extra_seller_id"
         const val EXTRA_DESCRIPTION = "extra_description"
+        const val EXTRA_PAYMENT_ID = "extra_payment_id"
         private const val POLL_INTERVAL_MS = 5_000L
     }
 }

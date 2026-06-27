@@ -47,6 +47,14 @@ const paymentTransactionSchema = new Schema({
     type: String,
     required: true
   },
+  fcmToken: {
+    type: String,
+    default: null
+  },
+  notificationSentAt: {
+    type: Date,
+    default: null
+  },
   description: {
     type: String,
     default: ''
