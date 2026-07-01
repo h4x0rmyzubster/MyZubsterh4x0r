@@ -1,3 +1,4 @@
+# My Zubster Project
 # 🧩 MyZubster
 
 **MyZubster** is an open-source Android app that connects neighbors to exchange skills and services — from plumbing and hairdressing to tutoring and tech support. With built-in Monero (XMR) payments, it’s designed for private, peer-to-peer transactions without intermediaries.
