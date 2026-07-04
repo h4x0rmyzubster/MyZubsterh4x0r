@@ -6,6 +6,10 @@ import com.myzubster.models.Review
 import com.myzubster.models.Skill
 import com.myzubster.models.EscrowRequest
 import com.myzubster.models.EscrowResponse
+import com.myzubster.models.BookingRequest
+import com.myzubster.models.BookingResponse
+import com.myzubster.models.BookingListResponse
+import com.myzubster.models.AvailableSlotsResponse
 import com.myzubster.services.EscrowListResponse
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -90,6 +94,30 @@ interface ApiService {
 
     @GET("/api/escrow/user/{userId}")
     suspend fun getUserEscrows(@Path("userId") userId: String): EscrowListResponse
+
+    // ============ BOOKINGS ============
+    @POST("/api/bookings")
+    suspend fun createBooking(@Body request: BookingRequest): BookingResponse
+
+    @GET("/api/bookings/user/{userId}")
+    suspend fun getUserBookings(
+        @Path("userId") userId: String,
+        @Query("status") status: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 20
+    ): BookingListResponse
+
+    @GET("/api/bookings/available-slots")
+    suspend fun getAvailableSlots(
+        @Query("professionalId") professionalId: String,
+        @Query("date") date: String
+    ): AvailableSlotsResponse
+
+    @PUT("/api/bookings/{id}/status")
+    suspend fun updateBookingStatus(
+        @Path("id") id: String,
+        @Body status: Map<String, String>
+    ): BookingResponse
 
     companion object {
         fun create(

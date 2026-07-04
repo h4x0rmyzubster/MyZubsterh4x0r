@@ -10,11 +10,12 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// ============ HEALTH CHECK ============
 app.get('/health', (req, res) => {
     res.json({ ok: true, service: 'myzubster-backend' });
 });
 
-// ROTTA DI TEST PER GROQ (mock)
+// ============ ROTTA GROQ (mock) ============
 app.post('/api/test/groq', async (req, res) => {
     try {
         const { title, category } = req.body;
@@ -30,10 +31,15 @@ app.post('/api/test/groq', async (req, res) => {
     }
 });
 
-// ROTTA PER COMPETENZE VICINE (geolocalizzazione)
+// ============ ROTTA COMPETENZE ============
 const skillRoutes = require('./routes/skillRoutes');
 app.use('/api/skills', skillRoutes);
 
+// ============ ROTTA PRENOTAZIONI ============
+const bookingRoutes = require('./routes/bookings');
+app.use('/api/bookings', bookingRoutes);
+
+// ============ AVVIA IL SERVER ============
 app.listen(port, () => {
     console.log(`✅ Server avviato sulla porta ${port}`);
     console.log(`🌐 http://localhost:${port}/health`);
