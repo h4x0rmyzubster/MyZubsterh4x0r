@@ -4,17 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myzubster.models.BookingHistory
 import com.myzubster.repositories.BookingHistoryRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class BookingHistoryViewModel @Inject constructor(
-    private val repository: BookingHistoryRepository
-) : ViewModel() {
+class BookingHistoryViewModel : ViewModel() {
+
+    private val repository = BookingHistoryRepository()
 
     private val _bookingHistory = MutableStateFlow<List<BookingHistory>>(emptyList())
     val bookingHistory: StateFlow<List<BookingHistory>> = _bookingHistory.asStateFlow()
@@ -121,14 +118,6 @@ class BookingHistoryViewModel @Inject constructor(
         }
     }
 
-    fun refresh(userId: String) {
-        loadBookingHistory(userId, currentCategory, currentStatus, 1)
-    }
-
-    fun filterByCategory(userId: String, category: String) {
-        loadBookingHistory(userId, category, null, 1)
-    }
-
     fun filterByStatus(userId: String, status: String) {
         loadBookingHistory(userId, null, status, 1)
     }
@@ -137,9 +126,5 @@ class BookingHistoryViewModel @Inject constructor(
         currentCategory = null
         currentStatus = null
         loadBookingHistory(userId, null, null, 1)
-    }
-
-    fun clearError() {
-        _error.value = null
     }
 }

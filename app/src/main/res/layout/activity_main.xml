@@ -28,6 +28,16 @@
         android:layout_marginBottom="16dp" />
 
     <Button
+        android:id="@+id/btnBookingHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📋 Storico Prenotazioni"
+        android:textSize="16sp"
+        android:backgroundTint="#FF9800"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="16dp" />
+
+    <Button
         android:id="@+id/btnSettings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

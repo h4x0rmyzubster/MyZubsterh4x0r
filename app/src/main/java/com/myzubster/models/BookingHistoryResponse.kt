@@ -6,9 +6,3 @@ data class BookingHistoryResponse(
     val pagination: Pagination,
     val error: String? = null
 )
-
-data class Pagination(
-    val total: Int,
-    val page: Int,
-    val limit: Int
-)

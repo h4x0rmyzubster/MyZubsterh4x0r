@@ -1,14 +1,14 @@
 {
   "name": "myzubster-backend",
-  "version": "0.2.0",
+  "version": "0.3.0-beta.4",
   "private": true,
-  "description": "Lightweight self-hosted Monero payment gateway for MyZubster.",
+  "description": "Lightweight self-hosted Monero payment gateway for MyZubster with Booking History feature.",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
     "start:json-store": "node src/server.js",
-    "check": "node --check src/index.js && node --check src/server.js && node --check src/models/PaymentTransaction.js && node --check src/models/Review.js && node --check src/models/User.js && node --check src/reviews/routes.js && node --check src/notifications/firebase.js && node --check src/services/notificationService.js && node --check src/payment/config.js && node --check src/payment/moneroClient.js && node --check src/payment/paymentStore.js && node --check src/payment/paymentService.js && node --check src/payment/routes.js"
+    "check": "node --check src/index.js && node --check src/server.js && node --check src/models/PaymentTransaction.js && node --check src/models/Review.js && node --check src/models/User.js && node --check src/models/Booking.js && node --check src/reviews/routes.js && node --check src/notifications/firebase.js && node --check src/services/notificationService.js && node --check src/payment/config.js && node --check src/payment/moneroClient.js && node --check src/payment/paymentStore.js && node --check src/payment/paymentService.js && node --check src/payment/routes.js && node --check src/routes/bookings.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

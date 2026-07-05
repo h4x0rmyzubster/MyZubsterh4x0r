@@ -2,8 +2,11 @@ package com.myzubster.activities
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -11,15 +14,16 @@ import com.myzubster.R
 import com.myzubster.adapters.BookingHistoryAdapter
 import com.myzubster.models.BookingHistory
 import com.myzubster.network.ApiClient
-import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_booking_history.*
 import kotlinx.coroutines.*
-import javax.inject.Inject
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.flow.collectLatest
 
-@AndroidEntryPoint
 class BookingHistoryActivity : AppCompatActivity() {
+
+    private lateinit var toolbar: Toolbar
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var tvError: TextView
+    private lateinit var tvEmpty: TextView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     private lateinit var adapter: BookingHistoryAdapter
     private var bookings = mutableListOf<BookingHistory>()
@@ -32,7 +36,14 @@ class BookingHistoryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_booking_history)
 
-        // Get userId from intent or SharedPreferences
+        // Inizializza le view
+        toolbar = findViewById(R.id.toolbar)
+        recyclerView = findViewById(R.id.recyclerView)
+        progressBar = findViewById(R.id.progressBar)
+        tvError = findViewById(R.id.tv_error)
+        tvEmpty = findViewById(R.id.tv_empty)
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout)
+
         userId = intent.getStringExtra("userId") ?: getUserIdFromPreferences()
 
         setupToolbar()
@@ -52,7 +63,7 @@ class BookingHistoryActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         adapter = BookingHistoryAdapter { booking ->
-            navigateToBookingDetail(booking)
+            Toast.makeText(this, "Booking: ${booking.skillTitle}", Toast.LENGTH_SHORT).show()
         }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
@@ -92,7 +103,7 @@ class BookingHistoryActivity : AppCompatActivity() {
         if (isLoading) return
         isLoading = true
         progressBar.visibility = View.VISIBLE
-        tv_error.visibility = View.GONE
+        tvError.visibility = View.GONE
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -118,10 +129,10 @@ class BookingHistoryActivity : AppCompatActivity() {
                             currentPage = it.pagination.page
 
                             if (bookings.isEmpty()) {
-                                tv_empty.visibility = View.VISIBLE
+                                tvEmpty.visibility = View.VISIBLE
                                 recyclerView.visibility = View.GONE
                             } else {
-                                tv_empty.visibility = View.GONE
+                                tvEmpty.visibility = View.GONE
                                 recyclerView.visibility = View.VISIBLE
                             }
                         }
@@ -154,32 +165,13 @@ class BookingHistoryActivity : AppCompatActivity() {
     }
 
     private fun showError(message: String) {
-        tv_error.text = message
-        tv_error.visibility = View.VISIBLE
+        tvError.text = message
+        tvError.visibility = View.VISIBLE
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun getUserIdFromPreferences(): String {
-        // Implementa la logica per recuperare l'userId dalle SharedPreferences
-        // Esempio:
-        // val sharedPref = getSharedPreferences("MyZubsterPrefs", MODE_PRIVATE)
-        // return sharedPref.getString("userId", "") ?: ""
-        return "your_user_id_here"
-    }
-
-    private fun navigateToBookingDetail(booking: BookingHistory) {
-        // Naviga al dettaglio della prenotazione
-        Toast.makeText(this, "Booking: ${booking.skillTitle}", Toast.LENGTH_SHORT).show()
-        // Esempio di navigazione:
-        // val intent = Intent(this, BookingDetailActivity::class.java)
-        // intent.putExtra("bookingId", booking.id)
-        // startActivity(intent)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (bookings.isEmpty() && !isLoading) {
-            loadBookings(userId, currentPage)
-        }
+        val sharedPref = getSharedPreferences("MyZubsterPrefs", MODE_PRIVATE)
+        return sharedPref.getString("userId", "") ?: ""
     }
 }
