@@ -1,50 +1,49 @@
-console.log('🚀 Avvio del backend...');
-
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
+// Middleware
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// ============ HEALTH CHECK ============
+// API Versioning - SOLO v1 (rimosso v2)
+app.use('/api/v1', require('./api/v1'));
+
+// Health check
 app.get('/health', (req, res) => {
-    res.json({ ok: true, service: 'myzubster-backend' });
+  res.json({
+    status: 'ok',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    service: 'myzubster-backend'
+  });
 });
 
-// ============ ROTTA GROQ (mock) ============
-app.post('/api/test/groq', async (req, res) => {
-    try {
-        const { title, category } = req.body;
-        if (!title || !category) {
-            return res.status(400).json({ error: 'Titolo e categoria sono obbligatori' });
-        }
-        res.json({
-            success: true,
-            description: `Servizio professionale di "${title}" (categoria: ${category}). Qualità e affidabilità garantite.`
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Endpoint not found'
+  });
 });
 
-// ============ ROTTA COMPETENZE ============
-const skillRoutes = require('./routes/skillRoutes');
-app.use('/api/skills', skillRoutes);
+// Error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.message || 'Internal server error'
+  });
+});
 
-// ============ ROTTA PRENOTAZIONI ============
-const bookingRoutes = require('./routes/bookings');
-app.use('/api/bookings', bookingRoutes);
-
-// ============ ROTTA PREVENTIVI ============
-const quoteRoutes = require('./routes/quoteRoutes');
-app.use('/api/quotes', quoteRoutes);
-
-// ============ AVVIA IL SERVER ============
-app.listen(port, () => {
-    console.log(`✅ Server avviato sulla porta ${port}`);
-    console.log(`🌐 http://localhost:${port}/health`);
+app.listen(PORT, () => {
+  console.log(`🚀 MyZubster Backend running on port ${PORT}`);
+  console.log(`📚 API v1: http://localhost:${PORT}/api/v1`);
+  console.log(`❤️  Health: http://localhost:${PORT}/health`);
 });

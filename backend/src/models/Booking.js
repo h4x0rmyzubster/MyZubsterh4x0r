@@ -50,7 +50,7 @@ const bookingSchema = new Schema({
   timestamps: true
 });
 
-// Middleware per aggiornare completedAt quando lo status diventa 'completed' (per save)
+// Middleware per save
 bookingSchema.pre('save', function(next) {
   if (this.isModified('status') && this.status === 'completed' && !this.completedAt) {
     this.completedAt = new Date();
@@ -58,7 +58,7 @@ bookingSchema.pre('save', function(next) {
   next();
 });
 
-// Middleware per aggiornare completedAt quando lo status diventa 'completed' (per findOneAndUpdate)
+// Middleware per findOneAndUpdate
 bookingSchema.pre('findOneAndUpdate', function(next) {
   const update = this.getUpdate();
   if (update && update.status === 'completed' && !update.completedAt) {
@@ -91,5 +91,4 @@ bookingSchema.methods.getFormattedStatus = function() {
   return statusMap[this.status] || this.status;
 };
 
-// ✅ CORREZIONE: Evita la sovrascrittura del modello
 module.exports = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);
