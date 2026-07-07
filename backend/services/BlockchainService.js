@@ -1,5 +1,5 @@
 // backend/services/BlockchainService.js
-const Web3 = require('web3');
+const { Web3 } = require('web3');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
@@ -8,15 +8,63 @@ dotenv.config();
 
 class BlockchainService {
     constructor() {
-        // Inizializza Web3
+        // Usa la sintassi corretta per Web3 v4+
         this.web3 = new Web3(process.env.WEB3_PROVIDER || 'http://localhost:8545');
         
         // Carica l'ABI
         const abiPath = path.join(__dirname, '../abi/FeeManager.json');
-        const abi = JSON.parse(fs.readFileSync(abiPath, 'utf8'));
+        let abi;
+        try {
+            abi = JSON.parse(fs.readFileSync(abiPath, 'utf8'));
+        } catch (error) {
+            console.warn('⚠️ FeeManager ABI non trovato, uso ABI minima');
+            // ABI minima di fallback
+            abi = [
+                {
+                    "inputs": [
+                        { "internalType": "uint256", "name": "amount", "type": "uint256" },
+                        { "internalType": "uint256", "name": "volume", "type": "uint256" }
+                    ],
+                    "name": "calculateFee",
+                    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "currentFee",
+                    "outputs": [
+                        { "internalType": "uint256", "name": "baseFee", "type": "uint256" },
+                        { "internalType": "uint256", "name": "variableRate", "type": "uint256" },
+                        { "internalType": "uint256", "name": "discountThreshold", "type": "uint256" },
+                        { "internalType": "uint256", "name": "discountRate", "type": "uint256" },
+                        { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        { "internalType": "uint256", "name": "totalFee", "type": "uint256" }
+                    ],
+                    "name": "calculateDistribution",
+                    "outputs": [
+                        { "internalType": "uint256", "name": "treasuryAmount", "type": "uint256" },
+                        { "internalType": "uint256", "name": "stakingAmount", "type": "uint256" },
+                        { "internalType": "uint256", "name": "communityAmount", "type": "uint256" }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
+        }
         
         // Indirizzo del contratto
         this.contractAddress = process.env.FEE_CONTRACT_ADDRESS;
+        
+        if (!this.contractAddress) {
+            console.warn('⚠️ FEE_CONTRACT_ADDRESS non configurato in .env');
+        }
         
         // Crea l'istanza del contratto
         this.contract = new this.web3.eth.Contract(abi, this.contractAddress);
@@ -38,7 +86,15 @@ class BlockchainService {
             };
         } catch (error) {
             console.error('Errore calculateFee:', error);
-            throw new Error(`Errore calcolo fee: ${error.message}`);
+            // Fallback: 2%
+            const fallbackFee = Math.floor(amount * 0.02 * 100);
+            return {
+                fee: fallbackFee,
+                feeFormatted: (fallbackFee / 100).toFixed(2),
+                amount: amount,
+                volume: volume,
+                isFallback: true
+            };
         }
     }
 
