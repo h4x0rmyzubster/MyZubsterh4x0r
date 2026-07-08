@@ -47,6 +47,11 @@
             android:name=".ui.qr.QRCodeActivity"
             android:exported="false" />
 
+        <!-- === PAYMENT STATUS ACTIVITY === -->
+        <activity
+            android:name=".ui.payment.PaymentStatusActivity"
+            android:exported="false" />
+
         <!-- === FILE PROVIDER PER CONDIVIDERE QR === -->
         <provider
             android:name="androidx.core.content.FileProvider"
