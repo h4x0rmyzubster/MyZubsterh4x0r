@@ -12,33 +12,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // =============================================
-// MIDDLEWARE - CORS CORRETTO
+// MIDDLEWARE
 // =============================================
 
-// Abilita CORS per tutte le origini (sviluppo)
-app.use(cors());
-app.options('*', cors()); // Gestisce le richieste preflight OPTIONS
-
-// Middleware per forzare gli header CORS manualmente
-app.use((req, res, next) => {
-    const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'];
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin);
-    } else {
-        res.header('Access-Control-Allow-Origin', '*');
-    }
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    
-    // Se è una richiesta OPTIONS (preflight), rispondi immediatamente
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
-
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
