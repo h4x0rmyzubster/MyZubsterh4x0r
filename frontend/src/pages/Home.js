@@ -7,7 +7,6 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Leggi l'utente dal localStorage
         const userData = localStorage.getItem('user');
         console.log('📦 User da localStorage:', userData);
         
@@ -25,7 +24,7 @@ const Home = () => {
             setUser(null);
         }
         setLoading(false);
-    }, []); // Si esegue solo al caricamento
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -50,10 +49,15 @@ const Home = () => {
                 <h1 className="text-4xl font-bold text-blue-600 mb-4">MyZubster</h1>
                 
                 {user ? (
-                    // Utente loggato
                     <>
                         <p className="text-gray-600 mb-2">Benvenuto, <span className="font-semibold">{user.name}</span>!</p>
                         <p className="text-gray-600 mb-6">Scambio di competenze con Monero</p>
+                        
+                        {/* PULSANTE PROFILO */}
+                        <Link to="/profile" className="block w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition mb-2">
+                            Profilo
+                        </Link>
+                        
                         <button
                             onClick={handleLogout}
                             className="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
@@ -62,7 +66,6 @@ const Home = () => {
                         </button>
                     </>
                 ) : (
-                    // Utente non loggato
                     <>
                         <p className="text-gray-600 mb-6">Scambio di competenze con Monero</p>
                         <div className="space-y-2">
