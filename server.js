@@ -5,6 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const connectDB = require('./config/database');
 const orderRoutes = require('./routes/orders');
+const authRoutes = require('./routes/auth'); // 👈 Aggiunto: route autenticazione
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,7 +20,8 @@ app.use(cors({
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rotte
+// ========== ROTTE ==========
+app.use('/api/auth', authRoutes);    // 👈 Nuova rotta per autenticazione
 app.use('/api/orders', orderRoutes);
 
 // Health check
@@ -41,13 +43,14 @@ app.get('/', (req, res) => {
     message: 'MyZubster Backend API',
     version: '1.0.0',
     endpoints: {
-      health: '/api/health',
-      orders: '/api/orders'
+      auth: '/api/auth',
+      orders: '/api/orders',
+      health: '/api/health'
     }
   });
 });
 
-// Error handling
+// ========== ERROR HANDLING ==========
 app.use((err, req, res, next) => {
   console.error('❌ Errore server:', err.stack);
   res.status(500).json({
@@ -60,7 +63,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint non trovato' });
 });
 
-// Avvio server
+// ========== AVVIO SERVER ==========
 if (process.env.NODE_ENV !== 'test') {
   console.log('🔄 Connessione al database...');
   connectDB().then(() => {

@@ -6,11 +6,10 @@ const feeService = require('../services/feeService');
 // ========== CREATE ORDER ==========
 exports.createOrder = async (req, res) => {
   try {
-    const { userId, items, total, currency, shippingAddress, notes } = req.body;
+    // Prende l'userId dal token (utente autenticato)
+    const userId = req.user.id;
+    const { items, total, currency, shippingAddress, notes } = req.body;
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId è obbligatorio' });
-    }
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'items deve essere un array non vuoto' });
     }
@@ -19,7 +18,7 @@ exports.createOrder = async (req, res) => {
     }
 
     const order = new Order({
-      userId,
+      userId, // 👈 ora prende da req.user.id
       items,
       total,
       currency: currency || 'XMR',
@@ -31,7 +30,7 @@ exports.createOrder = async (req, res) => {
 
     await order.save();
 
-    console.log(`[Order] ✅ Ordine creato: ${order.orderNumber} (${order._id})`);
+    console.log(`[Order] ✅ Ordine creato: ${order.orderNumber} (${order._id}) per user ${userId}`);
 
     res.status(201).json({
       success: true,
@@ -47,7 +46,7 @@ exports.createOrder = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[Order] ❌ Errore:', error);
+    console.error('[Order] ❌ Errore creazione ordine:', error);
     res.status(500).json({
       error: 'Errore interno del server',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -59,12 +58,15 @@ exports.createOrder = async (req, res) => {
 exports.getOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = await Order.findById(orderId);
+    const userId = req.user.id;
+
+    const order = await Order.findOne({ _id: orderId, userId });
     if (!order) {
       return res.status(404).json({ error: 'Ordine non trovato' });
     }
     res.json(order);
   } catch (error) {
+    console.error('[Order] ❌ Errore getOrder:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -72,15 +74,22 @@ exports.getOrder = async (req, res) => {
 // ========== GET USER ORDERS ==========
 exports.getUserOrders = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id; // Usa l'utente autenticato
     const { limit = 50, status } = req.query;
+
     const query = { userId };
     if (status) query.status = status;
+
     const orders = await Order.find(query)
       .sort({ createdAt: -1 })
       .limit(Math.min(parseInt(limit), 100));
-    res.json({ count: orders.length, orders });
+
+    res.json({
+      count: orders.length,
+      orders
+    });
   } catch (error) {
+    console.error('[Order] ❌ Errore getUserOrders:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -89,9 +98,10 @@ exports.getUserOrders = async (req, res) => {
 exports.startPayment = async (req, res) => {
   try {
     const { orderId } = req.params;
+    const userId = req.user.id;
     const { amount, currency } = req.body;
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findOne({ _id: orderId, userId });
     if (!order) {
       return res.status(404).json({ error: 'Ordine non trovato' });
     }
@@ -135,7 +145,7 @@ exports.startPayment = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[Payment] ❌ Errore:', error);
+    console.error('[Payment] ❌ Errore startPayment:', error);
     res.status(500).json({
       error: 'Errore durante l\'avvio del pagamento',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -147,9 +157,20 @@ exports.startPayment = async (req, res) => {
 exports.getPaymentStatus = async (req, res) => {
   try {
     const { paymentId } = req.params;
+    const userId = req.user.id;
+
+    // Recupera il pagamento dal mock
     const payment = await paymentService.getPaymentStatus(paymentId);
+
+    // Verifica che l'ordine associato appartenga all'utente
+    const order = await Order.findOne({ paymentId, userId });
+    if (!order) {
+      return res.status(403).json({ error: 'Accesso negato a questo pagamento' });
+    }
+
     res.json(payment);
   } catch (error) {
+    console.error('[Payment] ❌ Errore getPaymentStatus:', error);
     res.status(404).json({ error: error.message });
   }
 };
@@ -158,10 +179,13 @@ exports.getPaymentStatus = async (req, res) => {
 exports.cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const order = await Order.findById(orderId);
+    const userId = req.user.id;
+
+    const order = await Order.findOne({ _id: orderId, userId });
     if (!order) {
       return res.status(404).json({ error: 'Ordine non trovato' });
     }
+
     if (!order.isCancellable()) {
       return res.status(400).json({
         error: 'Ordine non annullabile',
@@ -169,10 +193,17 @@ exports.cancelOrder = async (req, res) => {
         paymentStatus: order.paymentStatus
       });
     }
+
     order.status = 'cancelled';
     await order.save();
-    res.json({ success: true, message: 'Ordine annullato', order });
+
+    res.json({
+      success: true,
+      message: 'Ordine annullato',
+      order
+    });
   } catch (error) {
+    console.error('[Order] ❌ Errore cancelOrder:', error);
     res.status(500).json({ error: error.message });
   }
 };
