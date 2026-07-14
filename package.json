@@ -30,6 +30,7 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^30.0.0",
+    "mongodb-memory-server": "^10.4.3",
     "nodemon": "^3.1.9",
     "supertest": "^7.0.0"
   },
@@ -45,9 +46,18 @@
       "controllers/**/*.js",
       "services/**/*.js",
       "models/**/*.js",
+      "middleware/**/*.js",
       "!**/node_modules/**",
       "!**/tests/**"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    }
   },
   "overrides": {
     "undici": "7.18.2",
