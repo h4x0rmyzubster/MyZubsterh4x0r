@@ -1,20 +1,8 @@
-\## 📌 Description
+\## 📌 Descrizione
 
 
 
-Briefly describe what this PR does.
-
-
-
-\---
-
-
-
-\## 🔗 Related Issue
-
-
-
-Closes #ISSUE\_NUMBER (if applicable)
+Breve descrizione delle modifiche apportate.
 
 
 
@@ -22,15 +10,11 @@ Closes #ISSUE\_NUMBER (if applicable)
 
 
 
-\## 📋 Changes Made
+\## 🔗 Issue Correlata
 
 
 
-\- \[ ] Change 1
-
-\- \[ ] Change 2
-
-\- \[ ] Change 3
+Closes #ISSUE\_NUMBER
 
 
 
@@ -38,7 +22,23 @@ Closes #ISSUE\_NUMBER (if applicable)
 
 
 
-\## 🧪 How to Test
+\## 📋 Modifiche Apportate
+
+
+
+\- \[ ] Modifica 1
+
+\- \[ ] Modifica 2
+
+\- \[ ] Modifica 3
+
+
+
+\---
+
+
+
+\## 🧪 Come Testare
 
 
 
@@ -54,11 +54,11 @@ Closes #ISSUE\_NUMBER (if applicable)
 
 
 
-\## 📸 Screenshots (if applicable)
+\## 📸 Screenshot (se applicabile)
 
 
 
-\[Add images here]
+\[Inserisci immagini]
 
 
 
@@ -70,15 +70,15 @@ Closes #ISSUE\_NUMBER (if applicable)
 
 
 
-\- \[ ] I have tested these changes locally
+\- \[ ] Ho testato le modifiche localmente
 
-\- \[ ] I have updated documentation
+\- \[ ] Ho aggiornato la documentazione
 
-\- \[ ] My code follows the project style guidelines
+\- \[ ] Il codice segue lo stile del progetto
 
-\- \[ ] I have added tests (if needed)
+\- \[ ] Ho aggiunto test (se necessario)
 
-\- \[ ] All tests pass locally
+\- \[ ] Tutti i test passano localmente
 
 
 
@@ -86,9 +86,9 @@ Closes #ISSUE\_NUMBER (if applicable)
 
 
 
-\## 📝 Additional Notes
+\## 📝 Note Aggiuntive
 
 
 
-\[Any additional information or context]
+\[Qualsiasi informazione aggiuntiva]
 
