@@ -3,6 +3,8 @@ const axios = require('axios');
 
 class MoneroService {
   constructor() {
+    this.rpcUser = process.env.MONERO_RPC_USER || 'fee_rpc';
+    this.rpcPass = process.env.MONERO_RPC_PASSWORD || 'rpc_password';
     this.rpcUrl = 'http://127.0.0.1:28083/json_rpc';
     this.feePercent = parseInt(process.env.MONERO_FEE_PERCENT) || 2;
     this.maxConfirmations = 10;
@@ -10,16 +12,21 @@ class MoneroService {
     this.maxAttempts = 60;
   }
 
-  // Metodo per inviare richieste RPC
+  // Metodo per inviare richieste RPC con autenticazione
   async rpcRequest(method, params = {}) {
     try {
+      const auth = Buffer.from(`${this.rpcUser}:${this.rpcPass}`).toString('base64');
+
       const response = await axios.post(this.rpcUrl, {
         jsonrpc: '2.0',
         id: '0',
         method: method,
         params: params
       }, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${auth}`
+        },
         timeout: 30000
       });
 
