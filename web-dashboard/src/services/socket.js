@@ -4,6 +4,9 @@ import { io } from 'socket.io-client';
 let socket = null;
 let isConnecting = false;
 
+// FORZATO per sviluppo
+const SOCKET_URL = 'http://localhost:5000';
+
 export const connectSocket = (userId, onConnect = null, onDisconnect = null) => {
   if (socket && socket.connected) {
     console.log('🔌 WebSocket già connesso');
@@ -16,8 +19,6 @@ export const connectSocket = (userId, onConnect = null, onDisconnect = null) => 
   }
 
   isConnecting = true;
-
-  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 
   socket = io(SOCKET_URL, {
     transports: ['websocket', 'polling'],
@@ -101,7 +102,6 @@ export const offSocketEvent = (event, callback) => {
   }
 };
 
-// Esportazione nominativa invece di default anonimo
 const socketService = {
   connectSocket,
   disconnectSocket,

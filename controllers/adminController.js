@@ -41,12 +41,34 @@ exports.getDashboardStats = async (req, res) => {
 // ========== LISTA ORDINI (TUTTI) ==========
 exports.getAllOrders = async (req, res) => {
   try {
-    const { limit = 50, page = 1, status, paymentStatus } = req.query;
+    const { limit = 50, page = 1, status, paymentStatus, search, email } = req.query;
     const skip = (page - 1) * limit;
     
     const query = {};
     if (status) query.status = status;
     if (paymentStatus) query.paymentStatus = paymentStatus;
+    
+    // Ricerca per orderNumber (case-insensitive)
+    if (search) {
+      query.orderNumber = { $regex: search, $options: 'i' };
+    }
+    
+    // Ricerca per email utente
+    let userIds = [];
+    if (email) {
+      const users = await User.find({ email: { $regex: email, $options: 'i' } }).select('_id');
+      userIds = users.map(u => u._id);
+      if (userIds.length > 0) {
+        query.userId = { $in: userIds };
+      } else {
+        // Se non trova utenti con quella email, non restituisce ordini
+        return res.json({
+          success: true,
+          orders: [],
+          pagination: { total: 0, page: parseInt(page), limit: parseInt(limit), pages: 0 }
+        });
+      }
+    }
     
     const [orders, total] = await Promise.all([
       Order.find(query)

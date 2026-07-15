@@ -3,6 +3,7 @@
   "id": "0",
   "method": "get_transfers",
   "params": {
-    "in": true
+    "in": true,
+    "account_index": 0
   }
 }

@@ -1,7 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// FORZATO per sviluppo (per evitare problemi con .env)
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // Crea istanza axios
 const api = axios.create({
@@ -29,15 +30,12 @@ export const fetchCsrfToken = async () => {
 // Interceptor per il token JWT
 api.interceptors.request.use(
   async (config) => {
-    // Aggiungi token JWT
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Aggiungi CSRF token per richieste POST, PUT, DELETE
     if (['post', 'put', 'delete', 'patch'].includes(config.method?.toLowerCase())) {
-      // Se non abbiamo il token, recuperalo
       if (!csrfToken) {
         await fetchCsrfToken();
       }
@@ -55,11 +53,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Se il token CSRF è scaduto, rinnovalo e riprova
     if (error.response?.status === 403 && error.response?.data?.error?.includes('CSRF')) {
       console.log('🔄 CSRF token scaduto, rinnovo...');
       await fetchCsrfToken();
-      // Riprova la richiesta originale
       const config = error.config;
       config.headers['CSRF-Token'] = csrfToken;
       return api(config);
