@@ -1,59 +1,86 @@
-// backend/routes/auth.js
+// routes/auth.js - Rotte di autenticazione
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const { authenticateToken, generateToken } = require('../middleware/auth'); // 👈 IMPORTANTE!
+
 const router = express.Router();
 
-// ─── REGISTRAZIONE ───
-router.post('/register', async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-        
-        // TODO: Implementare registrazione reale
-        res.json({
-            success: true,
-            message: 'Registrazione simulata',
-            user: { id: 'user_123', name, email }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
+// UTENTI IN MEMORIA (sostituisci con database)
+const users = [];
 
-// ─── LOGIN ───
+// Inizializza un utente admin di default
+(async () => {
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  users.push({
+    id: 1,
+    email: 'admin@myzubster.com',
+    password: hashedPassword,
+    role: 'admin',
+    createdAt: new Date()
+  });
+  console.log('👤 Utente admin creato: admin@myzubster.com / admin123');
+})();
+
+/**
+ * POST /api/auth/login
+ * Autentica un utente e restituisce un token JWT
+ */
 router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        // TODO: Implementare login reale
-        res.json({
-            success: true,
-            token: 'sim_token_' + Date.now(),
-            user: { id: 'user_123', name: 'Test User', email }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        error: 'Campi mancanti',
+        message: 'Email e password sono obbligatori'
+      });
     }
+
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      return res.status(401).json({
+        error: 'Credenziali non valide',
+        message: 'Email o password errati'
+      });
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({
+        error: 'Credenziali non valide',
+        message: 'Email o password errati'
+      });
+    }
+
+    const token = generateToken(user.id, user.email);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      },
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+    });
+  } catch (error) {
+    console.error('❌ Errore login:', error);
+    res.status(500).json({
+      error: 'Errore interno del server',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
-// ─── GET /me ───
-router.get('/me', async (req, res) => {
-    try {
-        // TODO: Implementare get user reale
-        res.json({
-            success: true,
-            user: { id: 'user_123', name: 'Test User', email: 'test@example.com' }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
+/**
+ * GET /api/auth/me
+ * Restituisce i dati dell'utente autenticato
+ */
+router.get('/me', authenticateToken, (req, res) => {
+  res.json({
+    user: req.user
+  });
 });
 
 module.exports = router;

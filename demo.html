@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyZubster Demo - Test Pagamenti Monero</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: #161b22;
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid #30363d;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        h1 span {
+            background: #f0883e;
+            color: #0d1117;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 2px 12px;
+            border-radius: 20px;
+        }
+        .subtitle {
+            color: #8b949e;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            color: #e6edf3;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #f0883e;
+            box-shadow: 0 0 0 3px rgba(240, 136, 62, 0.3);
+        }
+        .row {
+            display: flex;
+            gap: 12px;
+        }
+        .row input {
+            flex: 1;
+        }
+        .btn {
+            background: #f0883e;
+            color: #0d1117;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #f5a15e;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #21262d;
+            color: #e6edf3;
+        }
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+        .card {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            border: 1px solid #30363d;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        .card .label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card .value {
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .status-pending {
+            background: #d29922;
+            color: #0d1117;
+        }
+        .status-completed {
+            background: #2ea043;
+            color: #0d1117;
+        }
+        .status-failed {
+            background: #da3633;
+            color: #0d1117;
+        }
+        .logs {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #30363d;
+            margin-top: 16px;
+            white-space: pre-wrap;
+            color: #8b949e;
+        }
+        .logs .success {
+            color: #2ea043;
+        }
+        .logs .error {
+            color: #da3633;
+        }
+        .logs .info {
+            color: #58a6ff;
+        }
+        .flex {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .flex .btn {
+            flex: 1;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid #30363d;
+            margin: 20px 0;
+        }
+        @media (max-width: 600px) {
+            .row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>
+        🧪 MyZubster Demo
+        <span>TESTNET</span>
+    </h1>
+    <p class="subtitle">Test end-to-end del pagamento Monero su testnet</p>
+
+    <!-- FORM -->
+    <div class="form-group">
+        <label>💰 Importo (USD)</label>
+        <input type="number" id="amount" value="0.01" step="0.01" min="0.01" />
+    </div>
+    <div class="form-group">
+        <label>📧 Email Cliente</label>
+        <input type="email" id="email" value="test@example.com" />
+    </div>
+
+    <div class="row">
+        <button class="btn" id="createBtn">📦 Crea Ordine</button>
+        <button class="btn btn-secondary" id="checkBtn">🔄 Verifica Stato</button>
+    </div>
+
+    <!-- RISULTATO -->
+    <div id="result" class="card" style="display:none;">
+        <div class="flex" style="justify-content:space-between;">
+            <span class="label">📌 Ordine #<span id="orderId">-</span></span>
+            <span id="statusBadge" class="status-badge status-pending">pending</span>
+        </div>
+        <div style="margin-top:10px;">
+            <div class="label">📍 Subaddress Monero</div>
+            <div class="value" id="moneroAddress" style="font-size:13px;">-</div>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:20px; flex-wrap:wrap;">
+            <div>
+                <div class="label">💰 Da pagare</div>
+                <div class="value" id="moneroAmount">-</div>
+            </div>
+            <div>
+                <div class="label">✅ Conferme</div>
+                <div class="value" id="confirmations">0</div>
+            </div>
+            <div>
+                <div class="label">🔗 TxID</div>
+                <div class="value" id="txHash" style="font-size:12px;">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="logs" id="log">⏳ In attesa di azioni...</div>
+
+    <hr />
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="manualCheckBtn" style="flex:1;">🔍 Controlla pagamento (manuale)</button>
+        <button class="btn btn-secondary" id="clearLogBtn" style="flex:1;">🗑️ Cancella log</button>
+    </div>
+    <p style="font-size:12px; color:#8b949e; margin-top:12px;">
+        ⚠️ Assicurati che il wallet RPC sia in esecuzione su testnet e che il backend sia avviato.
+    </p>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:3000';
+    let currentOrderId = null;
+    let pollInterval = null;
+
+    const logEl = document.getElementById('log');
+    const resultEl = document.getElementById('result');
+
+    function log(msg, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const classes = {
+            success: 'success',
+            error: 'error',
+            info: 'info'
+        };
+        const line = `<span class="${classes[type] || ''}">[${time}] ${msg}</span>`;
+        logEl.innerHTML += '\n' + line;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clearLog() {
+        logEl.innerHTML = '🧹 Log pulito.';
+    }
+
+    function updateResult(order) {
+        currentOrderId = order.id;
+        resultEl.style.display = 'block';
+        document.getElementById('orderId').textContent = order.id;
+        document.getElementById('moneroAddress').textContent = order.moneroAddress || '-';
+        document.getElementById('moneroAmount').textContent = order.moneroAmount
+            ? `${order.moneroAmount.toFixed(8)} XMR`
+            : '-';
+        document.getElementById('confirmations').textContent = order.confirmations || 0;
+        document.getElementById('txHash').textContent = order.txHash || '-';
+
+        const badge = document.getElementById('statusBadge');
+        badge.className = 'status-badge';
+        if (order.status === 'pending') {
+            badge.classList.add('status-pending');
+            badge.textContent = '⏳ pending';
+        } else if (order.status === 'completed') {
+            badge.classList.add('status-completed');
+            badge.textContent = '✅ completed';
+        } else if (order.status === 'failed') {
+            badge.classList.add('status-failed');
+            badge.textContent = '❌ failed';
+        } else {
+            badge.textContent = order.status || 'unknown';
+        }
+    }
+
+    async function createOrder() {
+        const amount = parseFloat(document.getElementById('amount').value);
+        const email = document.getElementById('email').value;
+
+        if (!amount || amount <= 0) {
+            log('⚠️ Inserisci un importo valido.', 'error');
+            return;
+        }
+        if (!email) {
+            log('⚠️ Inserisci un email valida.', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('createBtn');
+        btn.disabled = true;
+        log('📦 Creazione ordine...', 'info');
+
+        try {
+            const res = await fetch(`${API_URL}/api/orders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount, currency: 'USD', customerEmail: email })
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                throw new Error(`HTTP ${res.status}: ${err}`);
+            }
+
+            const order = await res.json();
+            log(`✅ Ordine creato! ID: ${order.id}`, 'success');
+            log(`📍 Subaddress: ${order.moneroAddress}`, 'info');
+            log(`💰 Da pagare: ${order.moneroAmount.toFixed(8)} XMR`, 'info');
+            updateResult(order);
+
+        } catch (err) {
+            log(`❌ Errore: ${err.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function checkOrder() {
+        if (!currentOrderId) {
+            log('⚠️ Nessun ordine da verificare. Crea prima un ordine.', 'error');
+            return;
+        }
+
+        log(`🔄 Verifica ordine #${currentOrderId}...`, 'info');
+
+        try {
+            const res = await fetch(`${API_URL}/api/orders/${currentOrderId}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const order = await res.json();
+            updateResult(order);
+
+            if (order.status === 'completed') {
+                log(`✅ Ordine #${currentOrderId} COMPLETATO! 🎉`, 'success');
+                log(`🔗 TxID: ${order.txHash}`, 'info');
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+            } else {
+                log(`⏳ Stato: ${order.status} (conferme: ${order.confirmations || 0})`, 'info');
+            }
+        } catch (err) {
+            log(`❌ Errore verifica: ${err.message}`, 'error');
+        }
+    }
+
+    function startPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+        log('🔄 Avvio polling automatico (ogni 10 secondi)...', 'info');
+        pollInterval = setInterval(checkOrder, 10000);
+    }
+
+    // --- EVENTI ---
+    document.getElementById('createBtn').addEventListener('click', async () => {
+        await createOrder();
+        if (currentOrderId) {
+            setTimeout(() => startPolling(), 2000);
+        }
+    });
+
+    document.getElementById('checkBtn').addEventListener('click', checkOrder);
+
+    document.getElementById('manualCheckBtn').addEventListener('click', checkOrder);
+
+    document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+
+    // Carica ordine da query string? es: ?id=1
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('id');
+    if (orderId) {
+        currentOrderId = parseInt(orderId);
+        log(`🔗 Ordine #${orderId} caricato da URL`, 'info');
+        checkOrder();
+        setTimeout(() => startPolling(), 2000);
+    }
+
+    log('✅ Demo pronta. Crea un ordine per iniziare.', 'success');
+</script>
+</body>
+</html>

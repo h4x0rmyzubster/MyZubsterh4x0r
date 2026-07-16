@@ -2,6 +2,8 @@
 const cron = require('node-cron');
 const axios = require('axios');
 
+const MONERO_MIN_CONFIRMATIONS = parseInt(process.env.MONERO_MIN_CONFIRMATIONS) || 10;
+
 // Array per tenere traccia degli ordini (in futuro, database)
 let orders = [];
 
@@ -15,7 +17,6 @@ function startPaymentMonitor() {
     const pendingOrders = orders.filter(o => o.status === 'pending');
     
     if (pendingOrders.length === 0) {
-      // Nessun ordine in sospeso, salta il controllo
       return;
     }
     
@@ -36,7 +37,7 @@ function startPaymentMonitor() {
  */
 async function checkPayment(order) {
   try {
-    const moneroRpcUrl = process.env.MONERO_RPC_URL || 'http://localhost:18083';
+    const moneroRpcUrl = process.env.MONERO_RPC_URL || 'http://host.docker.internal:18083';
     const addressIndex = order.addressIndex || 1;
     
     const response = await axios.post(`${moneroRpcUrl}/json_rpc`, {
@@ -50,35 +51,39 @@ async function checkPayment(order) {
       }
     });
     
-    // Verifica se ci sono transazioni in entrata
     if (response.data.result && response.data.result.in) {
       const transfers = response.data.result.in;
       
       for (const transfer of transfers) {
-        // Converte da atomic unit (1e12) a XMR
         const amountReceived = parseFloat(transfer.amount) / 1e12;
-        
-        // Verifica se l'importo ricevuto è >= quanto dovuto (con tolleranza del 5%)
         const requiredAmount = order.moneroAmount;
-        const tolerance = requiredAmount * 0.05; // 5% di tolleranza
+        const tolerance = requiredAmount * 0.05;
         const minRequired = requiredAmount - tolerance;
         
         if (amountReceived >= minRequired) {
-          // Pagamento ricevuto!
-          console.log(`✅ [Monitor] PAGAMENTO RICEVUTO per ordine #${order.id}: ${amountReceived.toFixed(8)} XMR`);
-          console.log(`   📦 Richiesto: ${requiredAmount.toFixed(8)} XMR, Ricevuto: ${amountReceived.toFixed(8)} XMR`);
-          console.log(`   🔗 TxID: ${transfer.txid}`);
+          const confirmations = transfer.confirmations || 0;
           
-          // Aggiorna lo stato dell'ordine
-          order.status = 'completed';
-          order.paidAt = new Date().toISOString();
-          order.txHash = transfer.txid;
-          order.confirmations = transfer.confirmations || 0;
-          order.amountReceived = amountReceived;
+          console.log(`🔍 [Monitor] Transazione su ordine #${order.id}: ${amountReceived.toFixed(8)} XMR, conferme: ${confirmations}`);
           
-          console.log(`🎉 Ordine #${order.id} completato!`);
+          if (confirmations >= MONERO_MIN_CONFIRMATIONS) {
+            // ✅ Pagamento confermato!
+            console.log(`✅ [Monitor] PAGAMENTO CONFERMATO per ordine #${order.id} (${confirmations} conferme)`);
+            console.log(`   📦 Richiesto: ${requiredAmount.toFixed(8)} XMR, Ricevuto: ${amountReceived.toFixed(8)} XMR`);
+            console.log(`   🔗 TxID: ${transfer.txid}`);
+            
+            order.status = 'completed';
+            order.paidAt = new Date().toISOString();
+            order.txHash = transfer.txid;
+            order.confirmations = confirmations;
+            order.amountReceived = amountReceived;
+            
+            console.log(`🎉 Ordine #${order.id} completato!`);
+          } else {
+            // ⏳ In attesa di conferme
+            console.log(`⏳ [Monitor] Ordine #${order.id} in attesa di conferme (${confirmations}/${MONERO_MIN_CONFIRMATIONS})`);
+            order.confirmations = confirmations;
+          }
         } else if (amountReceived > 0) {
-          // Pagamento parziale ricevuto
           console.log(`⚠️ [Monitor] Pagamento PARZIALE per ordine #${order.id}: ${amountReceived.toFixed(8)} XMR (richiesto: ${requiredAmount.toFixed(8)} XMR)`);
         }
       }
@@ -97,7 +102,6 @@ async function checkPayment(order) {
  * @param {Object} order - L'ordine da aggiungere
  */
 function addOrderToMonitor(order) {
-  // Aggiunge l'ordine all'array (in futuro, al database)
   orders.push(order);
   console.log(`📌 [Monitor] Ordine #${order.id} aggiunto al monitoraggio`);
 }
@@ -121,5 +125,5 @@ module.exports = {
   addOrderToMonitor, 
   getOrders, 
   getOrdersByStatus,
-  orders // esportato per compatibilità con il codice esistente
+  orders
 };
