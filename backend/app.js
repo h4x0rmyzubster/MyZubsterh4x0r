@@ -1,8 +1,11 @@
-// app.js - MyZubster Backend (versione pulita, senza web3, senza models)
+// app.js - MyZubster Backend (con monitoraggio pagamenti e tasso di cambio)
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+
+// Importa i servizi
+const { convertUSDToXMR } = require('./services/exchangeRate');
+const { startPaymentMonitor, addOrderToMonitor, getOrders, getOrdersByStatus } = require('./services/paymentMonitor');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,28 +16,36 @@ app.use(cors({
   credentials: true
 }));
 
-// Applica bodyParser.json() SOLO alle rotte /api (esclude /ws)
-app.use('/api', bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ========== DATI IN MEMORIA (per test) ==========
-let orders = [];
-let orderIdCounter = 1;
+// Debug: log dei body ricevuti
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    console.log(`📨 Body ricevuto (${req.method} ${req.path}):`, req.body);
+  }
+  next();
+});
 
 // ========== ROUTES ==========
 
 // 1. Crea un ordine e genera un subaddress Monero
 app.post('/api/orders', async (req, res) => {
   try {
-    const { amount, currency, customerEmail } = req.body;
+    const { amount, currency = 'USD', customerEmail } = req.body;
 
-    if (!amount || !currency || !customerEmail) {
-      return res.status(400).json({ error: 'Campi mancanti: amount, currency, customerEmail' });
+    if (!amount || !customerEmail) {
+      return res.status(400).json({ 
+        error: 'Campi mancanti: amount, customerEmail' 
+      });
     }
 
     // 🔑 Genera un nuovo subaddress via RPC Monero
     const moneroRpcUrl = process.env.MONERO_RPC_URL || 'http://localhost:18083';
-    const label = `order_${orderIdCounter}`;
+    
+    // Ottieni l'indice del prossimo subaddress (in base al numero di ordini)
+    const addressIndex = getOrders().length + 1;
+    const label = `order_${addressIndex}`;
 
     const response = await fetch(`${moneroRpcUrl}/json_rpc`, {
       method: 'POST',
@@ -54,61 +65,86 @@ app.post('/api/orders', async (req, res) => {
 
     if (data.error) {
       console.error('❌ Errore RPC Monero:', data.error);
-      return res.status(500).json({ error: 'Errore nella generazione del subaddress', details: data.error });
+      return res.status(500).json({ 
+        error: 'Errore nella generazione del subaddress', 
+        details: data.error 
+      });
     }
 
     const moneroAddress = data.result.address;
-    // Converti l'importo in XMR (esempio: 0.01 USD -> 0.001 XMR, da adattare)
-    const moneroAmount = amount * 0.001;
+    
+    // 💱 Converti l'importo USD in XMR usando il tasso di cambio reale
+    const moneroAmount = await convertUSDToXMR(amount);
 
-    // Salva l'ordine in memoria
+    // Crea l'ordine
     const newOrder = {
-      id: orderIdCounter++,
+      id: addressIndex,
       amount,
       currency,
       customerEmail,
       moneroAddress,
       moneroAmount,
+      addressIndex,
       status: 'pending',
       createdAt: new Date().toISOString()
     };
-    orders.push(newOrder);
 
-    console.log(`📦 Ordine creato: ${newOrder.id}`);
+    // Aggiungi al monitoraggio
+    addOrderToMonitor(newOrder);
+
+    console.log(`📦 Ordine creato: #${newOrder.id}`);
     console.log(`🔑 Subaddress generato: ${moneroAddress}`);
+    console.log(`💰 Importo da pagare: ${moneroAmount.toFixed(8)} XMR`);
 
     res.status(201).json(newOrder);
 
   } catch (error) {
     console.error('❌ Errore creazione ordine:', error);
-    res.status(500).json({ error: 'Errore interno del server' });
+    res.status(500).json({ 
+      error: 'Errore interno del server',
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
 // 2. Recupera tutti gli ordini
 app.get('/api/orders', (req, res) => {
-  res.json(orders);
+  const allOrders = getOrders();
+  res.json(allOrders);
 });
 
 // 3. Recupera un ordine per ID
 app.get('/api/orders/:id', (req, res) => {
-  const order = orders.find(o => o.id === parseInt(req.params.id));
+  const order = getOrders().find(o => o.id === parseInt(req.params.id));
   if (!order) {
     return res.status(404).json({ error: 'Ordine non trovato' });
   }
   res.json(order);
 });
 
-// 4. Health check
+// 4. Recupera ordini per stato
+app.get('/api/orders/status/:status', (req, res) => {
+  const status = req.params.status;
+  const filteredOrders = getOrdersByStatus(status);
+  res.json(filteredOrders);
+});
+
+// 5. Health check
 app.get('/api/health', async (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: 'MyZubster Backend',
+    version: '1.1.0',
     database: 'in-memory (test)',
     monero: {
       rpc: process.env.MONERO_RPC_URL,
       network: process.env.MONERO_NETWORK
+    },
+    stats: {
+      totalOrders: getOrders().length,
+      pendingOrders: getOrdersByStatus('pending').length,
+      completedOrders: getOrdersByStatus('completed').length
     }
   });
 });
@@ -117,10 +153,11 @@ app.get('/api/health', async (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     message: 'MyZubster Backend API',
-    version: '1.0.0',
+    version: '1.1.0',
     endpoints: {
       health: '/api/health',
-      orders: '/api/orders'
+      orders: '/api/orders',
+      ordersStatus: '/api/orders/status/:status'
     }
   });
 });
@@ -145,7 +182,9 @@ app.listen(PORT, () => {
   console.log(`📦 Modalità: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔒 Monero RPC: ${process.env.MONERO_RPC_URL || 'non configurato'}`);
   console.log(`📊 Fee Service: MOCK (2%)`);
-  console.log(`👥 Ordini in memoria: ${orders.length}`);
+  
+  // Avvia il monitoraggio pagamenti
+  startPaymentMonitor();
 });
 
 module.exports = app;
