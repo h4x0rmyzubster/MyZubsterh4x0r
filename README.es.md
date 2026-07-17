@@ -1,48 +1,264 @@
-\## 👨‍💻 El Autor
+
+
+\---
 
 
 
-\*\*Daniel Ioni\*\* – Desarrollador Autodidacta \& Monero Advocate
+\### 📝 `README.es.md` e `README.fr.md`
 
 
 
-Soy un desarrollador italiano de 38 años, con sede en Rímini, con una profunda pasión por la privacidad, la libertad financiera y la tecnología de código abierto.
-
-
-
-Mi viaje comenzó con la \*\*minería de Bitcoin\*\* y evolucionó hacia una participación profunda con la comunidad \*\*Monero\*\*. Fundé \*\*"Monero Italia"\*\* en Facebook, un grupo dedicado a difundir la conciencia sobre las criptomonedas centradas en la privacidad en Italia. Con los años, he adquirido experiencia en minería, trading y creación de marketplaces, siempre con un enfoque en la descentralización y la soberanía del usuario.
-
-
-
-Más allá del código, amo los animales – tengo una pequeña compañera llamada \*\*Chanel\*\* que me hace compañía durante las sesiones nocturnas de programación. 🐱
-
-
-
-\*\*Mi visión para MyZubster\*\* es simple: crear un ecosistema \*\*libre, abierto y accesible\*\* donde cualquiera pueda intercambiar servicios y habilidades sin intermediarios. Creo que la tecnología debería empoderar a las personas, no controlarlas. Por eso MyZubster es 100% open source – cualquiera puede usarlo, contribuir, modificarlo o construir su propio negocio sobre él.
-
-
-
-\*\*¿La única regla?\*\* Úsalo para el bien. Nada de actividades ilegales. Todo lo demás es válido.
-
-
-
-Espero que MyZubster pueda evolucionar hacia una plataforma global donde la libertad, la privacidad y el intercambio peer‑to‑peer se conviertan en el nuevo estándar. Esta es mi contribución a un mundo más abierto y equitativo.
-
-
-
-\- 🌐 Basado en Rímini, Italia
-
-\- 💻 Desarrollador Full‑Stack Autodidacta (Node.js, React, React Native, Android)
-
-\- 🔒 Monero Advocate \& Entusiasta de la Privacidad
-
-\- 📱 Fundador de "Monero Italia" (grupo de Facebook)
-
-\- 🐱 Papá de Chanel
-
-\- 📫 \*\*GitHub\*\*: \[DanielIoni-creator](https://github.com/DanielIoni-creator)
+(Struttura identica, tradotti in spagnolo e francese – disponibili su richiesta)
 
 
 
 \---
+
+
+
+\## 📁 2. REPOSITORY: `MyZubsterGateway` (`gateway/`)
+
+
+
+\### 📝 `README.md` (Technical – Gateway)
+
+
+
+```markdown
+
+\# 🔒 MyZubster – Core Monero Gateway
+
+
+
+Self-hosted Monero payment gateway with unique subaddress generation, automatic payment monitoring, and webhook integration.
+
+
+
+\---
+
+
+
+\## 🎯 Overview
+
+
+
+MyZubster Gateway is the heart of the MyZubster ecosystem. It handles all Monero interactions, including:
+
+
+
+\- \*\*Subaddress Generation\*\* – Unique addresses per order for privacy and tracking
+
+\- \*\*Payment Monitoring\*\* – Automatic scanning of pending orders every 60 seconds
+
+\- \*\*Webhook Notifications\*\* – Real-time updates to your marketplace
+
+\- \*\*JWT Authentication\*\* – Secure API access
+
+
+
+\---
+
+
+
+\## 🔧 How the Gateway Works
+
+
+
+\### 1. Subaddress Generation
+
+
+
+When your application needs a new payment address for an order, it calls the gateway. The gateway communicates with the Monero wallet RPC to generate a \*\*unique subaddress\*\* for that specific order.
+
+
+
+```javascript
+
+async function generateSubaddress(label) {
+
+&#x20; const response = await fetch(`${MONERO\_RPC\_URL}/json\_rpc`, {
+
+&#x20;   method: 'POST',
+
+&#x20;   headers: { 'Content-Type': 'application/json' },
+
+&#x20;   body: JSON.stringify({
+
+&#x20;     jsonrpc: '2.0',
+
+&#x20;     id: '0',
+
+&#x20;     method: 'create\_address',
+
+&#x20;     params: { account\_index: 0, label: label }
+
+&#x20;   })
+
+&#x20; });
+
+&#x20; const data = await response.json();
+
+&#x20; return data.result.address;
+
+}
+
+2\. Payment Monitoring
+
+
+
+The gateway continuously monitors the blockchain for incoming payments using Monero RPC's get\_bulk\_payments method. This is done at a set interval (default: 60 seconds).
+
+3\. Webhook Notifications
+
+
+
+When a payment is confirmed (with the required number of confirmations), the gateway sends a webhook to your application.
+
+
+
+Example Webhook Payload:
+
+json
+
+
+
+{
+
+&#x20; "orderId": 123,
+
+&#x20; "status": "completed",
+
+&#x20; "txHash": "abcdef...",
+
+&#x20; "confirmations": 10,
+
+&#x20; "amountReceived": 0.00614
+
+}
+
+4\. JWT Authentication
+
+
+
+All API endpoints are secured with JWT (JSON Web Tokens).
+
+📡 API Endpoints
+
+Method	Endpoint	Description
+
+POST	/api/auth/login	Login \& get JWT token
+
+POST	/api/orders	Create order (generates subaddress)
+
+GET	/api/orders	List all orders
+
+GET	/api/orders/:id	Get order details
+
+GET	/api/health	Health check
+
+🚀 Quick Start
+
+Prerequisites
+
+
+
+&#x20;   Node.js 18+
+
+
+
+&#x20;   Monero Wallet RPC (testnet or mainnet)
+
+
+
+&#x20;   PostgreSQL or SQLite
+
+nstallation
+
+bash
+
+
+
+git clone https://github.com/DanielIoni-creator/MyZubsterGateway.git
+
+cd MyZubsterGateway
+
+npm install
+
+cp .env.example .env
+
+\# Edit .env with your configuration
+
+node app.js
+
+Environment Variables
+
+env
+
+
+
+PORT=3000
+
+NODE\_ENV=production
+
+MONERO\_RPC\_URL=http://localhost:18083
+
+MONERO\_NETWORK=testnet
+
+MONERO\_MIN\_CONFIRMATIONS=10
+
+JWT\_SECRET=your\_jwt\_secret
+
+WEBHOOK\_URL=http://your-app.com/api/webhook/order-update
+
+WEBHOOK\_SECRET=your\_webhook\_secret
+
+📁 Project Structure
+
+text
+
+
+
+MyZubsterGateway/
+
+├── app.js                 # Entry point
+
+├── models/               # Database models
+
+│   └── Order.js
+
+├── services/             # Business logic
+
+│   ├── exchangeRate.js   # USD → XMR conversion
+
+│   └── paymentMonitor.js # RPC monitoring \& webhooks
+
+├── routes/               # API routes
+
+│   ├── auth.js
+
+│   └── orders.js
+
+└── middleware/           # JWT authentication
+
+&#x20;   └── auth.js
+
+📄 License
+
+
+
+MIT License
+
+🔗 Related Projects
+
+
+
+&#x20;   MyZubster-Marketplace – Marketplace Backend
+
+
+
+&#x20;   MyZubster-App – Android Mobile App
+
+
+
+Built with ❤️ for the Monero community.
 
