@@ -1,196 +1,48 @@
+\## 👨‍💻 L'Auteur
 
----
 
-### 🇫🇷 `README.fr.md` (Français)
 
-```markdown
-# 🌐 MyZubster – Passerelle de Paiement Monero Self-Hosted & Écosystème Offshore
+\*\*Daniel Ioni\*\* – Développeur Autodidacte \& Monero Advocate
 
-**MyZubster** est un écosystème complet et auto‑hébergé pour accepter les paiements en Monero (XMR), gérer un marché de compétences et traiter des commandes – le tout sans intermédiaires. Conçu pour vous donner le contrôle total sur vos fonds, vos données et votre entreprise.
 
----
 
-## 🎯 Ce Qui Rend MyZubster Unique
+Je suis un développeur italien de 38 ans, basé à Rimini, avec une profonde passion pour la vie privée, la liberté financière et la technologie open source.
 
-- 🔒 **Vraiment Self-Hosted** – Vous possédez l'infrastructure. Pas de frais mensuels, pas d'intermédiaires.
-- 🌊 **Passerelle Offshore** – Acceptez Monero de n'importe où, réglez instantanément et gardez votre vie privée.
-- 🧩 **Architecture Modulaire** – Core Gateway, Marketplace et App Mobile fonctionnent ensemble ou séparément.
-- 💰 **Système de Commission Intégré** – Gagnez sur chaque transaction (définissez votre propre taux).
-- 📱 **Mobile-First** – Application Android incluse pour acheteurs et vendeurs.
-- 🔓 **100% Open Source** – Auditez, forkez et personnalisez selon vos besoins.
 
----
 
-## 🔥 Comment Fonctionne la Passerelle Offshore de Paiement Monero
+Mon parcours a commencé avec le \*\*minage de Bitcoin\*\* et a évolué vers un engagement profond avec la communauté \*\*Monero\*\*. J'ai fondé \*\*"Monero Italia"\*\* sur Facebook, un groupe dédié à la sensibilisation aux cryptomonnaies axées sur la vie privée en Italie. Au fil des ans, j'ai acquis de l'expérience dans le minage, le trading et la création de marketplaces, toujours avec un accent sur la décentralisation et la souveraineté de l'utilisateur.
 
-Le cœur de MyZubster est la **passerelle offshore** – un ensemble de services qui transforment Monero en un moyen de paiement fluide pour votre marketplace.
 
-### 1️⃣ Subaddress Uniques par Commande
 
-Chaque commande reçoit son propre subaddress Monero. Cela signifie :
+Au‑delà du code, j'aime les animaux – j'ai une petite compagne nommée \*\*Chanel\*\* qui me tient compagnie pendant les sessions de programmation nocturnes. 🐱
 
-- ✅ **Confidentialité** – Les clients envoient à une adresse unique, pas à votre portefeuille principal.
-- ✅ **Traçabilité** – Vous savez exactement à quelle commande appartient un paiement.
-- ✅ **Conformité** – Pas d'exposition de votre solde ou de votre historique de transactions.
 
-### 2️⃣ Surveillance Automatique des Paiements
 
-La passerelle analyse les paiements entrants toutes les 60 secondes via `get_bulk_payments` de Monero RPC. Pas de vérification manuelle, pas de polling depuis le frontend – ça fonctionne tout seul.
+\*\*Ma vision pour MyZubster\*\* est simple : créer un écosystème \*\*libre, ouvert et accessible\*\* où chacun peut échanger des services et des compétences sans intermédiaires. Je crois que la technologie devrait donner du pouvoir aux gens, pas les contrôler. C'est pourquoi MyZubster est 100% open source – n'importe qui peut l'utiliser, y contribuer, le modifier ou construire son propre business dessus.
 
-- 📡 **Surveillance Permanente** – Exécutée en arrière-plan via PM2.
-- ⚡ **Presque en Temps Réel** – Les commandes sont mises à jour en quelques secondes après la confirmation.
-- 🔐 **Seuil de Confirmations** – Vous définissez le nombre minimum de confirmations (ex. 10 pour mainnet).
 
-### 3️⃣ Mises à Jour des Commandes via Webhook
 
-Lorsqu'un paiement est confirmé, la passerelle notifie instantanément votre marketplace via un webhook. Cela élimine le besoin de polling constant et rend le système réactif.
+\*\*La seule règle ?\*\* Utilisez‑le pour le bien. Pas d'activités illégales. Tout le reste est permis.
 
-### 4️⃣ Intégration du Taux de Change
 
-La passerelle convertit automatiquement les montants en USD en XMR en utilisant des taux de change en temps réel (configurables). Les clients voient le montant exact à payer en Monero.
 
----
+J'espère que MyZubster pourra évoluer vers une plateforme mondiale où la liberté, la vie privée et l'échange peer‑to‑peer deviendront la nouvelle norme. C'est ma contribution à un monde plus ouvert et plus équitable.
 
-## 🧩 Composants de l'Écosystème
 
-| Composant | Description | Stack Technologique |
-|-----------|-------------|---------------------|
-| **Core Gateway** (`MyZubsterAPP`) | RPC, subaddress, surveillance, webhooks | Node.js, Express, Sequelize |
-| **Marketplace** (`MyZubster-Marketplace`) | Compétences, utilisateurs, commandes, commissions | Node.js, Express, JWT |
-| **App Mobile** (`MyZubster-App`) | Client Android pour acheteurs/vendeurs | React Native, Expo |
 
----
+\- 🌐 Basé à Rimini, Italie
 
-## 🚀 Guide de Démarrage Rapide
+\- 💻 Développeur Full‑Stack Autodidacte (Node.js, React, React Native, Android)
 
-### Prérequis
+\- 🔒 Monero Advocate \& Passionné de Vie Privée
 
-- Un VPS (DigitalOcean, Hetzner, Contabo) ou un serveur local
-- Monero Wallet RPC (testnet ou mainnet)
-- Node.js 18+, PostgreSQL (ou SQLite pour le développement)
+\- 📱 Fondateur de "Monero Italia" (groupe Facebook)
 
-### Installation Rapide (Tous les Composants)
+\- 🐱 Papa de Chanel
 
-```bash
-git clone https://github.com/DanielIoni-creator/MyZubster.git
-cd MyZubster
+\- 📫 \*\*GitHub\*\*: \[DanielIoni-creator](https://github.com/DanielIoni-creator)
 
-# Core Gateway
-cd MyZubsterAPP/backend
-npm install
-cp .env.example .env
-node app.js
 
-# Marketplace (dans un autre terminal)
-cd ../MyZubster-Marketplace
-npm install
-cp .env.example .env
-node server.js
-🏗️ Aperçu de l'Architecture
-text
 
-                     ┌─────────────────────────────┐
-                     │    Monero Wallet RPC         │
-                     │   (testnet/mainnet)          │
-                     └──────────────┬──────────────┘
-                                    │
-                                    ▼
-                     ┌─────────────────────────────┐
-                     │        CORE GATEWAY          │
-                     │  - Génération de Subaddress  │
-                     │  - Surveillance des Paiements│
-                     │  - Envoi de Webhook          │
-                     │  - Authentification JWT      │
-                     └──────────────┬──────────────┘
-                                    │
-                                    │   Webhook
-                                    ▼
-                     ┌─────────────────────────────┐
-                     │      MARKETPLACE             │
-                     │  - Utilisateurs / Compétences / Commandes│
-                     │  - JWT Auth                  │
-                     │  - Commissions               │
-                     │  - Réception de Webhook      │
-                     └──────────────┬──────────────┘
-                                    │
-                                    │   REST API
-                                    ▼
-                     ┌─────────────────────────────┐
-                     │     APP MOBILE (Android)     │
-                     │  - Naviguer et Acheter       │
-                     │  - Tableau de Bord des Commandes│
-                     └─────────────────────────────┘
+\---
 
-💰 Flux du Paiement Offshore (Étape par Étape)
-
-    L'acheteur crée une commande – Le Marketplace demande un subaddress au Core Gateway.
-
-    Le Gateway génère un subaddress unique – Le renvoie au Marketplace.
-
-    L'acheteur envoie Monero à cette adresse.
-
-    Le Gateway surveille toutes les 60 secondes.
-
-    Paiement détecté – Vérifie le montant et les confirmations.
-
-    Commande confirmée – Le Gateway envoie un webhook au Marketplace.
-
-    Le Marketplace met à jour le statut – L'acheteur voit "terminé".
-
-    Les fonds sont disponibles – Le vendeur peut les retirer.
-🔐 Sécurité et Confidentialité
-
-    Pas de Données Centralisées – Toutes les données restent sur votre serveur.
-
-    Communication Chiffrée – Les webhooks utilisent des secrets partagés ; tout le trafic peut être en HTTPS.
-
-    Accès Basé sur les Rôles – Permissions granulaires (utilisateur, vendeur, admin).
-
-    Confidentialité des Transactions – La confidentialité inhérente de Monero protège acheteurs et vendeurs.
-
-🛠️ Personnalisation
-
-    Définissez Votre Commission – Modifiez COMMISSION_PERCENTAGE dans le .env du Marketplace.
-
-    Changez les Confirmations – Ajustez MONERO_MIN_CONFIRMATIONS dans le .env du Core Gateway.
-
-    Rebranding – Toute l'UI est open source – vous pouvez changer les logos, couleurs et textes.
-
-    Ajouter de Nouvelles Fonctionnalités – L'architecture modulaire facilite l'extension.
-
-🤝 Contribuer
-
-Les contributions sont les bienvenues ! Corrections de bugs, nouvelles fonctionnalités ou améliorations de la documentation :
-
-    Forkez le dépôt.
-
-    Créez une branche pour la fonctionnalité.
-
-    Soumettez une pull request.
-📄 Licence
-
-MIT License
-👨‍💻 L'Auteur
-
-Daniel Ioni – Développeur Full-Stack & Passionné Open Source
-
-Je suis un développeur qui croit en la liberté financière et les solutions auto‑hébergées. J'ai construit MyZubster pour donner à chacun la capacité d'accepter Monero sans intermédiaires.
-
-    🌐 Basé en Europe
-
-    💻 Node.js, React, React Native, Android
-
-    🔒 Confidentialité d'abord
-🌟 Soutenir le Projet
-
-    ⭐ Mettez une étoile aux dépôts.
-
-    🐛 Signalez des problèmes.
-
-    📝 Écrivez des tutoriels ou des articles.
-
-    🧑‍💻 Contribuez au code.
-
-MyZubster – Votre passerelle vers des paiements sans frontières, privés et auto‑hébergés.
-
-Réalisé avec ❤️ pour la communauté Monero.
