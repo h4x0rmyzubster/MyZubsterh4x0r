@@ -11,6 +11,7 @@ const paymentRoutes = require('./routes/payments');
 const transactionRoutes = require('./routes/transactions');
 const reviewRoutes = require('./routes/reviews');
 const moneroService = require('./services/moneroService');
+const { startMonitoring } = require('./services/paymentMonitor');
 
 dotenv.config();
 
@@ -21,7 +22,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connesso a MongoDB'))
+  .then(() => {
+    console.log('✅ Connesso a MongoDB');
+    startMonitoring();
+  })
   .catch(err => console.error('❌ Errore connessione MongoDB:', err));
 
 app.use('/api/auth', authRoutes);

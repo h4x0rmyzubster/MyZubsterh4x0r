@@ -1,294 +1,222 @@
-\# 🌐 MyZubster – The Open Source Service Exchange Ecosystem
+# 🚀 MyZubsterGateway
 
+**MyZubsterGateway** is the open-source backend for **MyZubster** – a privacy-first, self-hosted skills and services exchange platform with **Monero (XMR) payments**, **Tor onion service**, and a fully decentralized architecture.
 
+Built with Node.js, Express, MongoDB, Nginx, and Cloudflare.
 
-\*\*MyZubster\*\* is more than just a payment gateway or a marketplace. It's a complete, self‑hosted ecosystem for exchanging services, skills, and value – powered by Monero, built with privacy, and designed for freedom.
+---
 
+## 🔗 Live & Community
 
+| Platform | Link |
+| :--- | :--- |
+| **🌐 Clearnet Site** | [https://myzubster.com](https://myzubster.com) |
+| **🧅 Tor Onion** | `http://olqcnbdlt35k2stmmwvzhvuetu2fc4us2jnn5wg6y6wlcddihfmdomid.onion` |
+| **📦 GitHub** | [https://github.com/DanielIoni-creator/MyZubsterGateway](https://github.com/DanielIoni-creator/MyZubsterGateway) |
+| **📝 Dev.to** | [https://dev.to/danielioni](https://dev.to/danielioni) |
+| **💼 LinkedIn** | [https://linkedin.com/in/danielioni](https://linkedin.com/in/danielioni) |
+| **🐦 Twitter / X** | [https://twitter.com/DanielIoni](https://twitter.com/DanielIoni) |
 
-> \*\*"Own your skills. Own your payments. Own your future."\*\*
+---
 
+## 📖 Read More
 
+| Article | Link |
+| :--- | :--- |
+| **Vision** – *MyZubster: The Open-Source Platform That Could Change the Financial Era* | [Read](https://dev.to/danielioni/myzubster-the-open-source-platform-that-could-change-the-financial-era-5hlp) |
+| **Deployment Guide** – *From Zero to Production: Deploying a Node.js App with Nginx, Cloudflare, systemd, and Tor* | [Read](https://dev.to/danielioni/from-zero-to-production-deploying-a-nodejs-app-with-nginx-cloudflare-systemd-and-tor-596l) |
+| **Experience** – *The Long Night of Deployment: How We Tamed DNS, Nginx, Tor, and a Rebel Firewall* | [Read](https://dev.to/danielioni/the-long-night-of-deployment-how-we-tamed-dns-nginx-tor-and-a-rebel-firewall-...) |
+| **Monero Integration** – *Integrating Monero Payments into a Node.js App: A Complete Guide* | [Read](https://dev.to/danielioni/integrating-monero-payments-into-a-nodejs-app-a-complete-guide-...) |
+| **Seraphis Migration** – *Monero's Seraphis Migration & FCMP++: A Technical Deep Dive* | [Read](https://dev.to/danielioni/moneros-seraphis-migration-fcmp-a-technical-deep-dive-4ih) |
+| **State of the Project** – *MyZubster: The Current State of the Project* | [Read](https://dev.to/danielioni/myzubster-the-current-state-of-the-project-...) |
 
-\---
+---
 
+## ✨ Features
 
+- **🔐 Monero (XMR) Payments** – Private, untraceable, and censorship-resistant.
+- **🧅 Tor Onion Service** – Access your platform anonymously.
+- **💻 Self-Hosted** – Full control over your data and infrastructure.
+- **⚡ Node.js + Express** – Fast, scalable, and modern backend.
+- **📦 MongoDB** – Flexible and reliable database.
+- **🛡️ Nginx + Let's Encrypt** – Secure reverse proxy with SSL.
+- **🌐 Cloudflare DNS** – Fast and secure DNS management.
+- **🔁 systemd** – Automatic startup and crash recovery.
 
-\## 📖 My Story – Why I Built This
+---
 
+## 🧰 Tech Stack
 
+| Layer | Technology |
+| :--- | :--- |
+| **Backend** | Node.js + Express |
+| **Database** | MongoDB |
+| **Reverse Proxy** | Nginx + Let's Encrypt |
+| **DNS** | Cloudflare |
+| **Process Management** | systemd |
+| **Privacy** | Tor onion service |
+| **Payments** | Monero (XMR) – testnet / mainnet |
+| **Frontend** | React + Vite + Tailwind |
+| **Version Control** | Git + GitHub (SSH) |
 
-I'm a developer who believes in \*\*financial freedom\*\* and \*\*self‑sovereignty\*\*. For years, I watched centralized platforms take a cut from every transaction, control user data, and dictate the rules. I wanted to build something different.
+---
 
+## 📦 Installation & Setup
 
+### Prerequisites
 
-Something that gives power back to the people.
+- Ubuntu 20.04 / 22.04 VPS
+- Node.js 20+
+- MongoDB
+- Nginx
+- Monero CLI tools (for wallet RPC)
+- Tor (optional, for onion service)
 
-
-
-\*\*MyZubster is that vision.\*\* It's a platform where anyone can:
-
-\- Offer their skills to a global audience
-
-\- Get paid instantly in Monero – without banks, without borders
-
-\- Keep their data private and under their control
-
-\- Earn from their own marketplace by setting their own fees
-
-
-
-I built this because I believe in \*\*peer‑to‑peer exchange\*\*. I believe that value should flow freely between people, not through middlemen. And I believe that open source is the only way to build trust.
-
-
-
-This is my contribution to a freer, more private world.
-
-
-
-\---
-
-
-
-\## 🧩 The Ecosystem
-
-
-
-MyZubster is built as three independent but integrated components:
-
-┌─────────────────────────────────────────────────────────────┐
-
-│ MYZUBSTER ECOSYSTEM │
-
-├─────────────────────────────────────────────────────────────┤
-
-│ │
-
-│ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
-
-│ │ Monero │ │ Core │ │ Marketplace │ │
-
-│ │ Wallet │──▶│ Gateway │──▶│ (Skills, Users, │ │
-
-│ │ RPC │ │ (Node.js) │ │ Orders, Reviews) │ │
-
-│ └─────────────┘ └─────────────┘ └──────────┬──────────┘ │
-
-│ │ │
-
-│ ▼ │
-
-│ ┌─────────────────────┐ │
-
-│ │ Mobile App │ │
-
-│ │ (Android/React │ │
-
-│ │ Native) │ │
-
-│ └─────────────────────┘ │
-
-└─────────────────────────────────────────────────────────────┘
-
-
-
-\### 1️⃣ Core Gateway (`gateway/`)
-
-The payment engine – handles all Monero interactions:
-
-\- Generates unique subaddresses per order
-
-\- Monitors payments in real‑time
-
-\- Sends webhooks to the marketplace
-
-\- JWT authentication
-
-
-
-\### 2️⃣ Marketplace (`marketplace/`)
-
-The business layer – where value is created:
-
-\- Users register and become sellers
-
-\- Skills are listed with prices
-
-\- Orders are created and tracked
-
-\- Reviews build trust
-
-\- Commissions are earned
-
-
-
-\### 3️⃣ Mobile App (`app/`)
-
-The user interface – for buyers and sellers:
-
-\- Browse skills
-
-\- Create orders
-
-\- Track payment status
-
-\- Manage profile
-
-
-
-\---
-
-
-
-\## 💡 What Makes This Different?
-
-
-
-| Feature | MyZubster | Centralized Platforms |
-
-|---------|-----------|----------------------|
-
-| \*\*Ownership\*\* | You own everything | They own your data |
-
-| \*\*Fees\*\* | You set them (0.5–5%) | 10–30% (forced) |
-
-| \*\*Privacy\*\* | Monero + self‑hosting | KYC + data selling |
-
-| \*\*Censorship\*\* | Impossible | You can be banned |
-
-| \*\*Freedom\*\* | Full control | You're a product |
-
-| \*\*Transparency\*\* | Open source | Closed source |
-
-| \*\*Payments\*\* | Instant Monero | Days or weeks |
-
-
-
-\---
-
-
-
-\## 🚀 Quick Start
-
-
+### Clone the repository
 
 ```bash
+git clone https://github.com/DanielIoni-creator/MyZubsterGateway.git
+cd MyZubsterGateway
 
-\# Clone the entire ecosystem
-
-git clone https://github.com/DanielIoni-creator/MyZubster.git
-
-cd MyZubster
-
-git submodule update --init --recursive
-
-
-
-\# Start the Gateway
-
-cd gateway
+Install dependencies
+bash
 
 npm install
 
-cp .env.example .env
-
-node app.js
-
-
-
-\# Start the Marketplace (in another terminal)
-
-cd ../marketplace
-
-npm install
+Configure environment
+bash
 
 cp .env.example .env
+nano .env
+
+Set your MongoDB URI, JWT secret, Monero RPC URL, and other variables.
+Start the server
+bash
 
 node server.js
 
+Production (systemd)
+bash
 
+sudo cp myzubster-gateway.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable myzubster-gateway
+sudo systemctl start myzubster-gateway
 
-\# Start the App (in another terminal)
+🔐 Monero Integration
+Wallet RPC Setup
 
-cd ../app
+    Download Monero CLI tools:
+    bash
 
-npm install
+    wget https://downloads.getmonero.org/cli/linux64 -O monero-linux64.tar.bz2
+    tar -xjf monero-linux64.tar.bz2
+    mv monero-x86_64-linux-gnu-v* monero
+    cd monero
 
-npx expo start
+    Create a wallet (testnet):
+    bash
+
+    ./monero-wallet-cli --generate-new-wallet /root/monero-wallet/myzubster-wallet \
+      --password MyStrongPassword123 \
+      --testnet \
+      --daemon-address testnet.community:28081
+
+    Start the wallet RPC:
+    bash
+
+    nohup ./monero-wallet-rpc \
+      --wallet-file /root/monero-wallet/myzubster-wallet \
+      --password MyStrongPassword123 \
+      --rpc-bind-port 18083 \
+      --daemon-address testnet.community:28081 \
+      --testnet \
+      --disable-rpc-login \
+      --log-level 0 \
+      > /root/monero-wallet-rpc.log 2>&1 &
+
+    Update .env:
+    text
+
+    MONERO_RPC_URL=http://127.0.0.1:18083/json_rpc
+    MONERO_WALLET_ADDRESS=YOUR_PRIMARY_ADDRESS
+    MONERO_NETWORK=testnet
+    PAYMENT_MODE=monero
+
+🌐 Deployment Architecture
+text
+
+┌─────────────────────────────────────────────────────────────┐
+│                         Internet                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   Cloudflare    │
+                    │    (DNS + SSL)  │
+                    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  Nginx (Port 80/443) │
+                    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  Node.js App    │
+                    │  (Port 3000)    │
+                    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   MongoDB       │
+                    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  Monero Wallet  │
+                    │  RPC (18083)    │
+                    └─────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │  Tor Onion      │
+                    │  Service        │
+                    └─────────────────┘
+
+🤝 Contributing
+
+Contributions are welcome! Please open an issue or submit a PR.
+
+    Fork the repository
+
+    Create your feature branch (git checkout -b feature/AmazingFeature)
+
+    Commit your changes (git commit -m 'Add some AmazingFeature')
+
+    Push to the branch (git push origin feature/AmazingFeature)
+
+    Open a Pull Request
 
 📄 License
 
+This project is licensed under the GPLv3 License – see the LICENSE file for details.
+💬 Connect with Me
 
+    Website: https://myzubster.com
 
-MIT License
+    Tor: http://olqcnbdlt35k2stmmwvzhvuetu2fc4us2jnn5wg6y6wlcddihfmdomid.onion
 
-👨‍💻 About the Author
+    GitHub: https://github.com/DanielIoni-creator
 
+    Dev.to: https://dev.to/danielioni
 
+    LinkedIn: https://linkedin.com/in/danielioni
 
-Daniel Ioni – Self‑Taught Developer \& Monero Advocate
+    Twitter: https://twitter.com/DanielIoni
 
+⭐ Support
 
+If you like this project, please give it a star ⭐ on GitHub and share it with others!
 
-I'm a 38‑year‑old Italian developer based in Rimini, with a deep passion for privacy, financial freedom, and open‑source technology.
-
-
-
-My journey started with Bitcoin mining and evolved into a deep involvement with the Monero community. I founded "Monero Italia" on Facebook, a group dedicated to spreading awareness about privacy‑focused cryptocurrencies in Italy. Over the years, I've gained experience in mining, trading, and building marketplaces – always with a focus on decentralization and user sovereignty.
-
-
-
-Beyond the code, I'm a cat lover – I have a little companion named Chanel who keeps me company during late‑night coding sessions. 🐱
-
-
-
-My vision for MyZubster is simple: to create a free, open, and accessible ecosystem where anyone can exchange services and skills without intermediaries. I believe that technology should empower people, not control them. That's why MyZubster is 100% open source – anyone can use it, contribute to it, modify it, or build their own business on top of it.
-
-
-
-The only rule? Use it for good. No illegal activities. Everything else is fair game.
-
-
-
-I hope MyZubster can evolve into a global platform where freedom, privacy, and peer‑to‑peer exchange become the new standard. This is my contribution to a more open and equitable world.
-
-
-
-&#x20;   🌐 Based in Rimini, Italy
-
-
-
-&#x20;   💻 Self‑Taught Full‑Stack Developer (Node.js, React, React Native, Android)
-
-
-
-&#x20;   🔒 Monero Advocate \& Privacy Enthusiast
-
-
-
-
-&#x20;   📱 Founder of "Monero Italia" (Facebook group)
-
-
-&#x20;   🐱 Cat dad to Chanel
-
-
-
-&#x20;   📫 GitHub: DanielIoni-creator
-
-
-
-Built with ❤️ for the Monero community.
-
-Follow the development of MyZubster and connect with me on social media:
-
-- 📖 **Blog & Articles**: [DEV.to - Daniel Ioni](https://dev.to/danielioni)
-- 🐦 **X (Twitter)**: [@myzubster](https://x.com/myzubster)
-- 💼 **LinkedIn**: [Daniel Ioni](https://www.linkedin.com/in/daniel-ioni-62b2b9423/)
-- 🐙 **GitHub**: [DanielIoni-creator](https://github.com/DanielIoni-creator)
-- 🎵 **TikTok**: [@h4x0r_23](https://www.tiktok.com/@h4x0r_23)
-
-**Stay updated on the journey!** 🚀
-
-
-
+Built with ❤️ for privacy, freedom, and decentralization.

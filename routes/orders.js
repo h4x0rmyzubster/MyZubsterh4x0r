@@ -3,12 +3,10 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Offer = require('../models/Offer');
 const moneroService = require('../services/moneroService');
-const auth = require('../middleware/auth'); // Assicurati che esista
+const auth = require('../middleware/auth');
 
-// Applica il middleware di autenticazione a TUTTE le route di orders
 router.use(auth);
 
-// GET /api/orders - Lista tutti gli ordini dell'utente
 router.get('/', async (req, res) => {
   try {
     const orders = await Order.find({ buyer: req.user._id })
@@ -21,20 +19,12 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/orders/:id - Dettaglio ordine
 router.get('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('offer', 'title price description seller')
       .populate('buyer', 'name email');
-    if (!order) {
-      return res.status(404).json({ error: 'Ordine non trovato' });
-    }
-    // Verifica che l'utente sia il buyer o il seller
-    if (order.buyer._id.toString() !== req.user._id.toString() && 
-        order.offer.seller?._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Non autorizzato' });
-    }
+    if (!order) return res.status(404).json({ error: 'Ordine non trovato' });
     res.json(order);
   } catch (error) {
     console.error('Errore recupero ordine:', error);
@@ -42,22 +32,18 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/orders - Crea un nuovo ordine (con subaddress Monero)
 router.post('/', async (req, res) => {
   try {
     const { offerId, quantity = 1 } = req.body;
     const buyerId = req.user._id;
 
-    // Verifica che l'offerta esista
     const offer = await Offer.findById(offerId);
-    if (!offer) {
-      return res.status(404).json({ error: 'Offerta non trovata' });
-    }
+    if (!offer) return res.status(404).json({ error: 'Offerta non trovata' });
 
-    // Calcola il totale
     const totalPrice = offer.price * quantity;
+    const expirySeconds = parseInt(process.env.PAYMENT_EXPIRY || '86400', 10);
+    const expiresAt = new Date(Date.now() + expirySeconds * 1000);
 
-    // Crea l'ordine
     const order = new Order({
       offer: offerId,
       buyer: buyerId,
@@ -65,12 +51,11 @@ router.post('/', async (req, res) => {
       totalPrice,
       status: 'pending',
       moneroPaymentStatus: 'pending',
+      moneroPaymentExpiresAt: expiresAt,
     });
 
-    // Salva l'ordine per ottenere l'ID
     await order.save();
 
-    // Genera subaddress Monero per questo ordine
     try {
       const sub = await moneroService.generateSubaddress(`order-${order._id}`);
       order.moneroSubaddress = sub.address;
@@ -78,10 +63,8 @@ router.post('/', async (req, res) => {
       await order.save();
     } catch (moneroError) {
       console.error('Errore generazione subaddress:', moneroError);
-      // Non bloccare la creazione dell'ordine, ma logga l'errore
     }
 
-    // Popola i dati per la risposta
     await order.populate('offer', 'title price');
     await order.populate('buyer', 'name email');
 
@@ -93,6 +76,7 @@ router.post('/', async (req, res) => {
         moneroAddressIndex: order.moneroAddressIndex,
         totalPrice: order.totalPrice,
         currency: 'XMR',
+        expiresAt: order.moneroPaymentExpiresAt,
       },
     });
   } catch (error) {
@@ -101,24 +85,16 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/orders/:id - Aggiorna stato ordine
 router.put('/:id', async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.id).populate('offer');
-    if (!order) {
-      return res.status(404).json({ error: 'Ordine non trovato' });
-    }
-
-    // Verifica che l'utente sia il venditore o il buyer (o admin)
-    if (order.buyer._id.toString() !== req.user._id.toString() && 
-        order.offer.seller?._id.toString() !== req.user._id.toString()) {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Ordine non trovato' });
+    if (order.buyer.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Non autorizzato' });
     }
-
     order.status = status || order.status;
     await order.save();
-
     res.json({ success: true, order });
   } catch (error) {
     console.error('Errore aggiornamento ordine:', error);
@@ -126,22 +102,16 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/orders/:id - Cancella un ordine (solo se in stato pending)
 router.delete('/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) {
-      return res.status(404).json({ error: 'Ordine non trovato' });
-    }
-
-    if (order.buyer._id.toString() !== req.user._id.toString()) {
+    if (!order) return res.status(404).json({ error: 'Ordine non trovato' });
+    if (order.buyer.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Non autorizzato' });
     }
-
     if (order.status !== 'pending') {
       return res.status(400).json({ error: 'Impossibile cancellare un ordine già elaborato' });
     }
-
     await order.deleteOne();
     res.json({ success: true, message: 'Ordine cancellato' });
   } catch (error) {
