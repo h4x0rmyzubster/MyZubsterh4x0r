@@ -10,22 +10,20 @@ const orderRoutes = require('./routes/orders');
 const paymentRoutes = require('./routes/payments');
 const transactionRoutes = require('./routes/transactions');
 const reviewRoutes = require('./routes/reviews');
+const moneroService = require('./services/moneroService');
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Connesso a MongoDB'))
   .catch(err => console.error('❌ Errore connessione MongoDB:', err));
 
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/offers', offerRoutes);
@@ -35,27 +33,50 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/reviews', reviewRoutes);
 
-// Webhook (deve essere prima di express.json per raw body)
 app.post('/api/payments/webhook', async (req, res) => {
-  // ... gestione webhook ...
+  res.status(200).json({ received: true });
 });
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
-// 🔥 ROTTA PER LA ROOT - RISOLVE IL 404
 app.get('/', (req, res) => {
   res.send('Benvenuto su MyZubsterGateway API. Vai su /api/health per lo stato.');
 });
 
-// Gestione 404 (deve essere l'ultima)
-app.use((req, res, next) => {
+// --- ROUTE MONERO ---
+app.post('/api/payments/generate-address', async (req, res) => {
+  try {
+    const { orderId, label } = req.body;
+    const sub = await moneroService.generateSubaddress(label || `order-${orderId || 'test'}`);
+    res.json({
+      success: true,
+      subaddress: sub.address,
+      index: sub.index,
+      label: sub.label,
+    });
+  } catch (error) {
+    console.error('Errore generazione subaddress:', error);
+    res.status(500).json({ error: 'Errore nella generazione del subaddress' });
+  }
+});
+
+app.get('/api/payments/balance', async (req, res) => {
+  try {
+    const balance = await moneroService.getBalance();
+    res.json({ success: true, balance });
+  } catch (error) {
+    console.error('Errore recupero saldo:', error);
+    res.status(500).json({ error: 'Errore nel recupero del saldo' });
+  }
+});
+// --- FINE ROUTE MONERO ---
+
+app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
 
-// Avvio server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server avviato sulla porta ${PORT}`);

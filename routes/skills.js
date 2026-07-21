@@ -1,83 +1,86 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const Skill = require('../models/Skill');
+const auth = require('../middleware/auth');
 
-// CREATE
-router.post('/', async (req, res) => {
-  try {
-    const skill = new Skill(req.body);
-    await skill.save();
-    res.status(201).json({ success: true, data: skill });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
+// Applica autenticazione a tutte le route
+router.use(auth);
 
-// READ ALL
+// GET /api/skills - Lista tutte le skill dell'utente loggato
 router.get('/', async (req, res) => {
   try {
-    const { category, zone, limit = 20, page = 1 } = req.query;
-    const query = { isActive: true };
-    if (category) query.category = category;
-    if (zone) query.zone = { $regex: zone, $options: 'i' };
-
-    const skills = await Skill.find(query)
-      .populate('user', 'username firstName lastName averageRating')
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
-
-    const total = await Skill.countDocuments(query);
-    res.json({
-      success: true,
-      data: skills,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) }
-    });
+    const skills = await Skill.find({ user: req.user._id });
+    res.json(skills);
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Errore recupero skills:', error);
+    res.status(500).json({ error: 'Errore nel recupero delle skill' });
   }
 });
 
-// READ ONE
+// GET /api/skills/:id - Dettaglio skill
 router.get('/:id', async (req, res) => {
   try {
-    const skill = await Skill.findById(req.params.id).populate('user', 'username firstName lastName phone location averageRating');
-    if (!skill) return res.status(404).json({ success: false, error: 'Abilità non trovata' });
-    res.json({ success: true, data: skill });
+    const skill = await Skill.findById(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Skill non trovata' });
+    }
+    res.json(skill);
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Errore recupero skill:', error);
+    res.status(500).json({ error: 'Errore nel recupero della skill' });
   }
 });
 
-// UPDATE
+// POST /api/skills - Crea una nuova skill
+router.post('/', async (req, res) => {
+  try {
+    const skillData = {
+      ...req.body,
+      user: req.user._id, // Aggiunge l'utente dal token
+    };
+    const skill = new Skill(skillData);
+    await skill.save();
+    res.status(201).json(skill);
+  } catch (error) {
+    console.error('Errore creazione skill:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /api/skills/:id - Aggiorna una skill
 router.put('/:id', async (req, res) => {
   try {
-    const skill = await Skill.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-    if (!skill) return res.status(404).json({ success: false, error: 'Abilità non trovata' });
-    res.json({ success: true, data: skill });
+    const skill = await Skill.findById(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Skill non trovata' });
+    }
+    if (skill.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+    Object.assign(skill, req.body);
+    await skill.save();
+    res.json(skill);
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
+    console.error('Errore aggiornamento skill:', error);
+    res.status(400).json({ error: error.message });
   }
 });
 
-// DELETE (soft delete)
+// DELETE /api/skills/:id - Elimina una skill
 router.delete('/:id', async (req, res) => {
   try {
-    const skill = await Skill.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-    if (!skill) return res.status(404).json({ success: false, error: 'Abilità non trovata' });
-    res.json({ success: true, message: 'Abilità disattivata con successo' });
+    const skill = await Skill.findById(req.params.id);
+    if (!skill) {
+      return res.status(404).json({ error: 'Skill non trovata' });
+    }
+    if (skill.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Non autorizzato' });
+    }
+    await skill.deleteOne();
+    res.json({ success: true, message: 'Skill eliminata' });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// GET BY USER
-router.get('/user/:userId', async (req, res) => {
-  try {
-    const skills = await Skill.find({ user: req.params.userId, isActive: true }).populate('user', 'username firstName lastName');
-    res.json({ success: true, data: skills });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Errore eliminazione skill:', error);
+    res.status(500).json({ error: 'Errore nell\'eliminazione della skill' });
   }
 });
 
