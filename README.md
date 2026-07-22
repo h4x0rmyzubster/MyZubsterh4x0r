@@ -1,250 +1,299 @@
-# 🚀 MyZubsterGateway
+# 🚀 MyZubster Gateway
 
-**MyZubsterGateway** is the open-source backend for **MyZubster** – a privacy-first, self-hosted skills and services exchange platform with **Monero (XMR) payments**, **Tor onion service**, and a fully decentralized architecture.
+**A Full‑Stack Decentralized Marketplace for Tokenizing Real‑World Assets**  
+with **Monero** payments, **Kali Linux** security, **DeepSeek AI** dispute resolution, **Tari** programmable assets, and **Tor** privacy.
 
-Built with Node.js, Express, MongoDB, Nginx, and Cloudflare.
-
----
-
-## 🔗 Live & Community
-
-| Platform | Link |
-| :--- | :--- |
-| **🌐 Clearnet Site** | [https://myzubster.com](https://myzubster.com) |
-| **🧅 Tor Onion** | `http://olqcnbdlt35k2stmmwvzhvuetu2fc4us2jnn5wg6y6wlcddihfmdomid.onion` |
-| **📦 GitHub** | [https://github.com/DanielIoni-creator/MyZubsterGateway](https://github.com/DanielIoni-creator/MyZubsterGateway) |
-| **📝 Dev.to** | [https://dev.to/danielioni](https://dev.to/danielioni) |
-| **💼 LinkedIn** | [https://linkedin.com/in/danielioni](https://linkedin.com/in/danielioni) |
-| **🐦 Twitter / X** | [https://twitter.com/DanielIoni](https://twitter.com/DanielIoni) |
+🔗 **Live Demo:** [https://myzubster.com](https://myzubster.com)  
+📦 **GitHub:** [DanielIoni-creator/MyZubsterGateway](https://github.com/DanielIoni-creator/MyZubsterGateway)
 
 ---
 
-## 📖 Read More
+## 📖 Table of Contents
 
-| Article | Link |
-| :--- | :--- |
-| **Vision** – *MyZubster: The Open-Source Platform That Could Change the Financial Era* | [Read](https://dev.to/danielioni/myzubster-the-open-source-platform-that-could-change-the-financial-era-5hlp) |
-| **Deployment Guide** – *From Zero to Production: Deploying a Node.js App with Nginx, Cloudflare, systemd, and Tor* | [Read](https://dev.to/danielioni/from-zero-to-production-deploying-a-nodejs-app-with-nginx-cloudflare-systemd-and-tor-596l) |
-| **Experience** – *The Long Night of Deployment: How We Tamed DNS, Nginx, Tor, and a Rebel Firewall* | [Read](https://dev.to/danielioni/the-long-night-of-deployment-how-we-tamed-dns-nginx-tor-and-a-rebel-firewall-...) |
-| **Monero Integration** – *Integrating Monero Payments into a Node.js App: A Complete Guide* | [Read](https://dev.to/danielioni/integrating-monero-payments-into-a-nodejs-app-a-complete-guide-...) |
-| **Seraphis Migration** – *Monero's Seraphis Migration & FCMP++: A Technical Deep Dive* | [Read](https://dev.to/danielioni/moneros-seraphis-migration-fcmp-a-technical-deep-dive-4ih) |
-| **State of the Project** – *MyZubster: The Current State of the Project* | [Read](https://dev.to/danielioni/myzubster-the-current-state-of-the-project-...) |
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Architecture](#-architecture)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+  - [Monero Wallet RPC](#-monero-wallet-rpc)
+  - [Kali Linux + DeepSeek AI Bot](#-kali-linux--deepseek-ai-bot)
+  - [Tari (Programmable Sidechain)](#-tari-programmable-sidechain)
+  - [SSL & HTTPS](#-ssl--https)
+- [API Endpoints](#-api-endpoints)
+- [Contributing](#-contributing)
+- [Social & Community](#-social--community)
+- [License](#-license)
 
 ---
 
 ## ✨ Features
 
-- **🔐 Monero (XMR) Payments** – Private, untraceable, and censorship-resistant.
-- **🧅 Tor Onion Service** – Access your platform anonymously.
-- **💻 Self-Hosted** – Full control over your data and infrastructure.
-- **⚡ Node.js + Express** – Fast, scalable, and modern backend.
-- **📦 MongoDB** – Flexible and reliable database.
-- **🛡️ Nginx + Let's Encrypt** – Secure reverse proxy with SSL.
-- **🌐 Cloudflare DNS** – Fast and secure DNS management.
-- **🔁 systemd** – Automatic startup and crash recovery.
+- **Tokenization** – Create fungible tokens (real estate, art, equity, commodities) with full metadata.
+- **Monero Payments** – Private, untraceable payments with subaddress generation and automatic order completion.
+- **Self‑Defending Security** – Autonomous bot that scans with Kali Linux tools (`nmap`, `nikto`, `sqlmap`) and analyses threats with DeepSeek AI (local).
+- **AI Dispute Resolution** – DeepSeek acts as an impartial mediator for escrow disputes, deciding release, refund, or escalation.
+- **Tari Integration** – On‑chain multisig escrow, programmable NFTs with royalties, and smart contracts.
+- **Reputation System** – Points earned per trade (seller +10/token, buyer +5/token) inform AI decisions.
+- **Tor Onion Service** – Censorship‑resistant access (migrating to a dedicated VPS).
+- **HTTPS** – Let’s Encrypt SSL certificate for secure clearnet access.
+- **Admin Dashboard** – (Coming soon) Real‑time statistics, user management, and transaction logs.
 
 ---
 
-## 🧰 Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
-| :--- | :--- |
-| **Backend** | Node.js + Express |
-| **Database** | MongoDB |
-| **Reverse Proxy** | Nginx + Let's Encrypt |
-| **DNS** | Cloudflare |
-| **Process Management** | systemd |
-| **Privacy** | Tor onion service |
-| **Payments** | Monero (XMR) – testnet / mainnet |
-| **Frontend** | React + Vite + Tailwind |
-| **Version Control** | Git + GitHub (SSH) |
+|-------|------------|
+| Backend | Node.js + Express |
+| Database | MongoDB + Mongoose |
+| Authentication | JWT + bcrypt |
+| Payments | Monero (XMR) – stagenet / mainnet |
+| Security | Kali Linux tools + DeepSeek AI (Ollama) |
+| Programmable Assets | Tari (Rust node & wallet) |
+| Frontend | React + Vite |
+| Reverse Proxy | Nginx |
+| SSL | Let’s Encrypt (Certbot) |
+| Privacy | Tor (onion service) |
+| Deployment | Ubuntu 24.04 VPS + Systemd |
 
 ---
 
-## 📦 Installation & Setup
+## 🏗️ Architecture
 
-### Prerequisites
+┌─────────────────────────────────────────────────────────────────────
 
-- Ubuntu 20.04 / 22.04 VPS
-- Node.js 20+
-- MongoDB
-- Nginx
-- Monero CLI tools (for wallet RPC)
-- Tor (optional, for onion service)
+│ MyZubster │
+├─────────────────────────────────────────────────────────────────────┤
+│ │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────────────┐ │
+│ │ Tokenization │ │ Monero │ │ Kali Linux + AI Bot │ │
+│ │ (Fungible) │ │ Payments │ │ (Security & Automation)│ │
+│ └──────────────┘ └──────────────┘ └──────────────────────────┘ │
+│ │
+│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────────────┐ │
+│ │ Tari + NFTs │ │ Escrow │ │ DeepSeek (Local AI) │ │
+│ │ (Smart) │ │ (Multisig) │ │ (Dispute Resolution) │ │
+│ └──────────────┘ └──────────────┘ └──────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────┘
+text
 
-### Clone the repository
+
+---
+
+## 🔧 Installation
+
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/DanielIoni-creator/MyZubsterGateway.git
 cd MyZubsterGateway
 
-Install dependencies
+2. Install Node.js dependencies
 bash
 
 npm install
 
-Configure environment
+3. Set up environment variables
+
+Create a .env file in the root directory with the following:
+env
+
+# Server
+PORT=3000
+NODE_ENV=production
+
+# MongoDB
+MONGODB_URI=mongodb://localhost:27017/myzubster
+
+# JWT
+JWT_SECRET=your_super_secret_key
+JWT_EXPIRES_IN=7d
+
+# Monero RPC
+MONERO_WALLET_RPC_URL=http://localhost:18083/json_rpc
+MONERO_DAEMON_RPC_URL=http://localhost:18081/json_rpc
+MONERO_NETWORK=stagenet
+
+# Tari RPC
+TARI_RPC_URL=http://localhost:12810/json_rpc
+TARI_WALLET_RPC=http://localhost:12820/json_rpc
+TARI_NETWORK=testnet
+
+# Frontend URL
+FRONTEND_URL=https://myzubster.com
+
+4. Start MongoDB
 bash
 
-cp .env.example .env
-nano .env
+systemctl start mongod
+systemctl enable mongod
 
-Set your MongoDB URI, JWT secret, Monero RPC URL, and other variables.
-Start the server
+⚙️ Configuration
+🔐 Monero Wallet RPC
+1. Start the Monero daemon (stagenet)
 bash
 
-node server.js
+cd ~/monero
+./monerod --stagenet --detach
 
-Production (systemd)
+2. Start the wallet RPC
 bash
 
-sudo cp myzubster-gateway.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable myzubster-gateway
-sudo systemctl start myzubster-gateway
+./monero-wallet-rpc \
+  --rpc-bind-port 18083 \
+  --daemon-address node.moneroworld.com:38081 \
+  --wallet-file ./myzubster_wallet \
+  --password 'YourPassword' \
+  --disable-rpc-login \
+  --trusted-daemon \
+  --stagenet
 
-🔐 Monero Integration
-Wallet RPC Setup
+3. Verify
+bash
 
-    Download Monero CLI tools:
-    bash
+curl -X POST http://localhost:18083/json_rpc \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":"0","method":"get_balance"}' | jq '.'
 
-    wget https://downloads.getmonero.org/cli/linux64 -O monero-linux64.tar.bz2
-    tar -xjf monero-linux64.tar.bz2
-    mv monero-x86_64-linux-gnu-v* monero
-    cd monero
+🤖 Kali Linux + DeepSeek AI Bot
+1. Install Kali tools
+bash
 
-    Create a wallet (testnet):
-    bash
+apt update
+apt install nmap nikto sqlmap -y
 
-    ./monero-wallet-cli --generate-new-wallet /root/monero-wallet/myzubster-wallet \
-      --password MyStrongPassword123 \
-      --testnet \
-      --daemon-address testnet.community:28081
+2. Install Ollama and pull DeepSeek
+bash
 
-    Start the wallet RPC:
-    bash
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull deepseek-r1:1.5b
 
-    nohup ./monero-wallet-rpc \
-      --wallet-file /root/monero-wallet/myzubster-wallet \
-      --password MyStrongPassword123 \
-      --rpc-bind-port 18083 \
-      --daemon-address testnet.community:28081 \
-      --testnet \
-      --disable-rpc-login \
-      --log-level 0 \
-      > /root/monero-wallet-rpc.log 2>&1 &
+3. The security bot script (/root/security_bot.py)
+python
 
-    Update .env:
-    text
+#!/usr/bin/env python3
+import subprocess
+import requests
+import json
 
-    MONERO_RPC_URL=http://127.0.0.1:18083/json_rpc
-    MONERO_WALLET_ADDRESS=YOUR_PRIMARY_ADDRESS
-    MONERO_NETWORK=testnet
-    PAYMENT_MODE=monero
+MYZUBSTER_API = "http://localhost:3000/api"
+TOKEN = ""
 
-🌐 Deployment Architecture
-text
+def login():
+    resp = requests.post(f"{MYZUBSTER_API}/auth/login",
+                         json={"email":"test@example.com","password":"Test123!"})
+    return resp.json().get('token')
 
-┌─────────────────────────────────────────────────────────────┐
-│                         Internet                             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │   Cloudflare    │
-                    │    (DNS + SSL)  │
-                    └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  Nginx (Port 80/443) │
-                    └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  Node.js App    │
-                    │  (Port 3000)    │
-                    └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │   MongoDB       │
-                    └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  Monero Wallet  │
-                    │  RPC (18083)    │
-                    └─────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │  Tor Onion      │
-                    │  Service        │
-                    └─────────────────┘
+def ask_deepseek(prompt):
+    resp = requests.post(
+        f"{MYZUBSTER_API}/ai/ask",
+        json={"prompt": prompt},
+        headers={'Authorization': f'Bearer {TOKEN}'}
+    )
+    return resp.json().get('response')
 
+def scan_gateway():
+    return subprocess.run(['nmap', '-p', '3000,80,443', 'localhost'], capture_output=True, text=True).stdout
+
+4. Automate with cron (every hour)
+bash
+
+crontab -e
+# Add:
+0 * * * * /usr/bin/python3 /root/security_bot.py >> /var/log/security_bot.log 2>&1
+
+🌐 Tari (Programmable Sidechain)
+1. Install Rust and Tari
+bash
+
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+
+git clone https://github.com/tari-project/tari.git
+cd tari
+cargo build --release --bin minotari_node
+cargo build --release --bin minotari_console_wallet
+
+2. Start Tari node and wallet
+bash
+
+nohup ~/tari/target/release/minotari_node \
+  --network testnet \
+  --base-path ~/tari-data \
+  > ~/tari_node.log 2>&1 &
+
+nohup ~/tari/target/release/minotari_console_wallet \
+  --network testnet \
+  --password myzubster \
+  --wallet-file ~/tari-wallet \
+  > ~/tari_wallet.log 2>&1 &
+
+3. Verify RPC
+bash
+
+curl -X POST http://localhost:12820/json_rpc \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":"0","method":"get_balance"}' | jq '.'
+
+🔒 SSL & HTTPS (Let's Encrypt)
+bash
+
+apt install certbot python3-certbot-nginx -y
+certbot --nginx -d myzubster.com -d www.myzubster.com
+
+Auto‑renewal:
+bash
+
+certbot renew --dry-run
+
+🌐 API Endpoints
+Method	Endpoint	Description	Auth
+POST	/api/auth/register	Register a new user	No
+POST	/api/auth/login	Login, get JWT token	No
+GET	/api/tokens	List active tokens	No
+POST	/api/tokens	Create a token	Yes
+GET	/api/tokens/holdings	User holdings	Yes
+POST	/api/marketplace/sell	Create a sell order	Yes
+POST	/api/marketplace/buy/:orderId	Buy from an order	Yes
+GET	/api/marketplace/orders/:tokenId	List open orders	No
+POST	/api/payments	Initiate a Monero payment	Yes
+GET	/api/payments/:id	Check payment status	Yes
+POST	/api/ai/ask	Query DeepSeek AI	Yes
+POST	/api/escrow	Create an escrow	Yes
+POST	/api/escrow/:id/dispute	Open a dispute	Yes
+POST	/api/tari/nft/mint	Mint an NFT on Tari	Yes
+POST	/api/tari/escrow	Create a Tari multisig escrow	Yes
+GET	/api/health	Health check	No
 🤝 Contributing
 
-Contributions are welcome! Please open an issue or submit a PR.
+We welcome contributions of all kinds!
 
-    Fork the repository
+    Fork the repository.
 
-    Create your feature branch (git checkout -b feature/AmazingFeature)
+    Create a new branch (git checkout -b feature/amazing-feature).
 
-    Commit your changes (git commit -m 'Add some AmazingFeature')
+    Commit your changes (git commit -m 'Add some amazing feature').
 
-    Push to the branch (git push origin feature/AmazingFeature)
+    Push to the branch (git push origin feature/amazing-feature).
 
-    Open a Pull Request
+    Open a Pull Request.
+
+🌍 Social & Community
+
+    Live Demo: https://myzubster.com
+
+    GitHub: DanielIoni-creator/MyZubsterGateway
+
+    X (Twitter): @myzubster
+
+    LinkedIn: Daniel Ioni
+
+    DEV.to: @danielioni
+
+    TikTok: @h4x0r_23
 
 📄 License
 
-This project is licensed under the GPLv3 License – see the LICENSE file for details.
-💬 Connect with Me
+This project is licensed under the MIT License – see the LICENSE file for details.
 
-    Website: https://myzubster.com
-
-    Tor: http://olqcnbdlt35k2stmmwvzhvuetu2fc4us2jnn5wg6y6wlcddihfmdomid.onion
-
-    GitHub: https://github.com/DanielIoni-creator
-
-    Dev.to: https://dev.to/danielioni
-
-    LinkedIn: https://linkedin.com/in/danielioni
-
-    Twitter: https://twitter.com/DanielIoni
-
-⭐ Support
-
-If you like this project, please give it a star ⭐ on GitHub and share it with others!
-
-Built with ❤️ for privacy, freedom, and decentralization.
-
-## 🤖 AI Integration (Local)
-
-MyZubster uses **Ollama** with **DeepSeek-R1:1.5B** for local AI capabilities:
-
-- **Security analysis**: scans logs and detects threats
-- **Support chatbot**: helps users with tokens and payments
-- **Automation**: reacts to anomalies in real time
-
-### Setup
-
-```bash
-ollama pull deepseek-r1:1.5b
-systemctl restart myzubster-gateway
-
-## 🤖 AI Integration (Local)
-
-MyZubster uses **Ollama** with **DeepSeek-R1:1.5B** for local AI capabilities:
-
-- **Security analysis**: scans logs and detects threats
-- **Support chatbot**: helps users with tokens and payments
-- **Automation**: reacts to anomalies in real time
-
-### Setup
-
-```bash
-ollama pull deepseek-r1:1.5b
-systemctl restart myzubster-gateway
+Built with ❤️ by the MyZubster team.
