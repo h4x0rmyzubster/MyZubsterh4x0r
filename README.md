@@ -431,3 +431,9 @@ cd ~/MyZubsterGateway
 git add README.md
 git commit -m "Docs: README completo con configurazione mainnet, OSINT, mobile e API"
 git push origin main
+## 📊 Status
+
+![Issues Closed](https://img.shields.io/github/issues-closed/DanielIoni-creator/MyZubsterGateway)
+![Open Issues](https://img.shields.io/github/issues/DanielIoni-creator/MyZubsterGateway)
+![Bounties](https://img.shields.io/badge/bounties-0.50%20XMR-blue)
+
