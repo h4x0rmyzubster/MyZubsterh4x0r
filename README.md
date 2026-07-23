@@ -19,7 +19,10 @@ with **Monero** payments, **Kali Linux** security, **DeepSeek AI** dispute resol
   - [Kali Linux + DeepSeek AI Bot](#-kali-linux--deepseek-ai-bot)
   - [Tari (Programmable Sidechain)](#-tari-programmable-sidechain)
   - [SSL & HTTPS](#-ssl--https)
+  - [Mainnet Configuration](#-mainnet-configuration)
+- [OSINT & Onion Scanner](#-osint--onion-scanner)
 - [API Endpoints](#-api-endpoints)
+- [Mobile App](#-mobile-app)
 - [Contributing](#-contributing)
 - [Social & Community](#-social--community)
 - [License](#-license)
@@ -34,8 +37,9 @@ with **Monero** payments, **Kali Linux** security, **DeepSeek AI** dispute resol
 - **AI Dispute Resolution** – DeepSeek acts as an impartial mediator for escrow disputes, deciding release, refund, or escalation.
 - **Tari Integration** – On‑chain multisig escrow, programmable NFTs with royalties, and smart contracts.
 - **Reputation System** – Points earned per trade (seller +10/token, buyer +5/token) inform AI decisions.
-- **Tor Onion Service** – Censorship‑resistant access (migrating to a dedicated VPS).
+- **Tor Onion Service** – Censorship‑resistant access.
 - **HTTPS** – Let’s Encrypt SSL certificate for secure clearnet access.
+- **OSINT Scanner** – Scan onion sites, extract wallets, analyze headers, and discover APIs.
 - **Admin Dashboard** – (Coming soon) Real‑time statistics, user management, and transaction logs.
 
 ---
@@ -51,30 +55,50 @@ with **Monero** payments, **Kali Linux** security, **DeepSeek AI** dispute resol
 | Security | Kali Linux tools + DeepSeek AI (Ollama) |
 | Programmable Assets | Tari (Rust node & wallet) |
 | Frontend | React + Vite |
+| Mobile | React Native + Expo |
+| NFC | react-native-nfc-manager |
 | Reverse Proxy | Nginx |
 | SSL | Let’s Encrypt (Certbot) |
 | Privacy | Tor (onion service) |
-| Deployment | Ubuntu 24.04 VPS + Systemd |
+| OSINT | Nmap, proxychains, curl, Python scripts |
+| Deployment | Ubuntu 24.04 + Systemd |
 
 ---
 
 ## 🏗️ Architecture
 
-┌─────────────────────────────────────────────────────────────────────
-
-│ MyZubster │
-├─────────────────────────────────────────────────────────────────────┤
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ MyZubster Ecosystem │
+├─────────────────────────────────────────────────────────────────────────────┤
 │ │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────────────┐ │
-│ │ Tokenization │ │ Monero │ │ Kali Linux + AI Bot │ │
-│ │ (Fungible) │ │ Payments │ │ (Security & Automation)│ │
-│ └──────────────┘ └──────────────┘ └──────────────────────────┘ │
+│ ┌──────────────────────────────┐ ┌──────────────────────────────────┐ │
+│ │ Backend │ │ Frontend │ │
+│ │ – Node.js/Express Gateway │ │ – React/Vite (Web) │ │
+│ │ – MongoDB + Mongoose │ │ – React Native/Expo (Mobile) │ │
+│ │ – JWT Authentication │ │ – NFC Tap‑to‑Pay │ │
+│ └──────────────────────────────┘ └──────────────────────────────────┘ │
 │ │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────────────────┐ │
-│ │ Tari + NFTs │ │ Escrow │ │ DeepSeek (Local AI) │ │
-│ │ (Smart) │ │ (Multisig) │ │ (Dispute Resolution) │ │
-│ └──────────────┘ └──────────────┘ └──────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────┘
+│ ┌──────────────────────────────┐ ┌──────────────────────────────────┐ │
+│ │ Blockchain │ │ Security │ │
+│ │ – Monero (XMR) Payments │ │ – Kali Linux Scanning │ │
+│ │ – Tari (NFTs & Smart) │ │ – DeepSeek AI Analysis │ │
+│ │ – Multisig Escrow │ │ – UFW Firewall │ │
+│ └──────────────────────────────┘ └──────────────────────────────────┘ │
+│ │
+│ ┌──────────────────────────────┐ ┌──────────────────────────────────┐ │
+│ │ OSINT & Scanner │ │ Governance │ │
+│ │ – Onion site scanning │ │ – DAO Voting │ │
+│ │ – Wallet extraction │ │ – 2% Ecosystem Wallet │ │
+│ │ – API discovery │ │ – Community Proposals │ │
+│ └──────────────────────────────┘ └──────────────────────────────────┘ │
+│ │
+│ ┌──────────────────────────────┐ ┌──────────────────────────────────┐ │
+│ │ Infrastructure │ │ Documentation │ │
+│ │ – Nginx Reverse Proxy │ │ – AI Recovery Guide │ │
+│ │ – SSL/HTTPS │ │ – Technical Docs │ │
+│ │ – Tor Onion Service │ │ – API Reference │ │
+│ └──────────────────────────────┘ └──────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
 text
 
 
@@ -99,7 +123,7 @@ Create a .env file in the root directory with the following:
 env
 
 # Server
-PORT=3000
+PORT=3002
 NODE_ENV=production
 
 # MongoDB
@@ -109,12 +133,12 @@ MONGODB_URI=mongodb://localhost:27017/myzubster
 JWT_SECRET=your_super_secret_key
 JWT_EXPIRES_IN=7d
 
-# Monero RPC
+# Monero RPC (stagenet for testing)
 MONERO_WALLET_RPC_URL=http://localhost:18083/json_rpc
 MONERO_DAEMON_RPC_URL=http://localhost:18081/json_rpc
 MONERO_NETWORK=stagenet
 
-# Tari RPC
+# Tari RPC (testnet for testing)
 TARI_RPC_URL=http://localhost:12810/json_rpc
 TARI_WALLET_RPC=http://localhost:12820/json_rpc
 TARI_NETWORK=testnet
@@ -176,7 +200,7 @@ import subprocess
 import requests
 import json
 
-MYZUBSTER_API = "http://localhost:3000/api"
+MYZUBSTER_API = "http://localhost:3002/api"
 TOKEN = ""
 
 def login():
@@ -193,7 +217,7 @@ def ask_deepseek(prompt):
     return resp.json().get('response')
 
 def scan_gateway():
-    return subprocess.run(['nmap', '-p', '3000,80,443', 'localhost'], capture_output=True, text=True).stdout
+    return subprocess.run(['nmap', '-p', '3002,80,443', 'localhost'], capture_output=True, text=True).stdout
 
 4. Automate with cron (every hour)
 bash
@@ -214,7 +238,7 @@ cd tari
 cargo build --release --bin minotari_node
 cargo build --release --bin minotari_console_wallet
 
-2. Start Tari node and wallet
+2. Start Tari node and wallet (testnet)
 bash
 
 nohup ~/tari/target/release/minotari_node \
@@ -246,6 +270,64 @@ bash
 
 certbot renew --dry-run
 
+🌐 Mainnet Configuration
+Monero Mainnet
+
+To switch to Monero mainnet:
+
+    Update .env:
+    env
+
+    MONERO_NETWORK=mainnet
+
+    Start the mainnet wallet RPC:
+    bash
+
+    ./monero-wallet-rpc --rpc-bind-port 18083 --daemon-address localhost:18081 --wallet-file ./myzubster_wallet --password 'YourPassword' --disable-rpc-login --trusted-daemon
+
+    Test with small amounts first.
+
+Tari Mainnet
+
+To switch to Tari mainnet:
+
+    Update .env:
+    env
+
+    TARI_NETWORK=mainnet
+
+    Start the mainnet Tari node and wallet:
+    bash
+
+    ./minotari_node --network mainnet --base-path ~/tari-data-mainnet
+    ./minotari_console_wallet --network mainnet --password myzubster --wallet-file ~/tari-wallet-mainnet
+
+🧅 OSINT & Onion Scanner
+
+MyZubster includes a suite of OSINT tools for analyzing onion sites:
+Endpoints
+Method	Endpoint	Description
+POST	/api/scanner/onionscan	Port scanning via Nmap + Tor
+POST	/api/scanner/headers	HTTP headers analysis
+POST	/api/scanner/endpoints	Common endpoint discovery
+POST	/api/scanner/full	Full scan (nmap + headers + endpoints)
+Example Usage
+bash
+
+TOKEN=$(curl -s -X POST http://localhost:3002/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"Test123!"}' | jq -r '.token')
+
+curl -X POST http://localhost:3002/api/scanner/full \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"target": "your.onion"}' | jq '.'
+
+Wallet Extraction Script
+bash
+
+python3 /root/onion_wallet_scanner.py --target http://your.onion
+
 🌐 API Endpoints
 Method	Endpoint	Description	Auth
 POST	/api/auth/register	Register a new user	No
@@ -263,7 +345,40 @@ POST	/api/escrow	Create an escrow	Yes
 POST	/api/escrow/:id/dispute	Open a dispute	Yes
 POST	/api/tari/nft/mint	Mint an NFT on Tari	Yes
 POST	/api/tari/escrow	Create a Tari multisig escrow	Yes
+POST	/api/scanner/onionscan	Scan an onion site	Yes
+POST	/api/scanner/headers	Analyze HTTP headers	Yes
+POST	/api/scanner/full	Full onion scan	Yes
 GET	/api/health	Health check	No
+📱 Mobile App
+
+MyZubster includes a React Native / Expo mobile app with:
+
+    ✅ Login / Register
+
+    ✅ Monero Payments
+
+    ✅ NFC Tap‑to‑Pay
+
+    ✅ Order Management
+
+Setup
+bash
+
+cd mobile
+npm install
+npx expo start --tunnel
+
+Scan the QR code with Expo Go (Android) or the Camera app (iOS).
+NFC Configuration
+
+To enable NFC payments, you need:
+
+    A physical NFC tag (NTAG215 or compatible)
+
+    A Monero wallet that supports NFC (Cake Wallet, Monerujo)
+
+    The react-native-nfc-manager library (already installed)
+
 🤝 Contributing
 
 We welcome contributions of all kinds!
@@ -297,3 +412,22 @@ We welcome contributions of all kinds!
 This project is licensed under the MIT License – see the LICENSE file for details.
 
 Built with ❤️ by the MyZubster team.
+text
+
+
+---
+
+## ✅ Dopo aver incollato
+
+1. **Salva** con `Ctrl+O` (poi premi `Invio` per confermare).
+2. **Esci** con `Ctrl+X`.
+
+---
+
+## 🔄 Aggiorna su GitHub
+
+```bash
+cd ~/MyZubsterGateway
+git add README.md
+git commit -m "Docs: README completo con configurazione mainnet, OSINT, mobile e API"
+git push origin main
