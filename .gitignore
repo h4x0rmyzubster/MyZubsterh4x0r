@@ -21,3 +21,5 @@ nohup.out
 .swp
 issue-*.md
 typescript/
+*.backup
+*.backup
